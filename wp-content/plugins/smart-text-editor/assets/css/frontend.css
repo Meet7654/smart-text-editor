@@ -1,0 +1,124 @@
+/* Smart Text Editor — Frontend Output Styles */
+
+.ste-output {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+/* Tables — default borders for cells without inline border styles */
+.ste-output table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+}
+.ste-output td, .ste-output th {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    vertical-align: top;
+}
+.ste-output th {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+.ste-styled {
+    display: inline;
+    transition: all 0.2s;
+}
+.ste-gradient-text {
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+/* Scroll animation hidden state — inline-block required for transform/clip-path.
+   transition: none overrides .ste-styled's transition:all which breaks animations. */
+[data-ste-anim] {
+    opacity: 0;
+    display: inline-block;
+    transition: none;
+}
+/* Fallback for browsers without IntersectionObserver */
+[data-ste-anim].ste-anim-no-observer {
+    opacity: 1;
+}
+
+/* ═══ Animations — each is visually distinct ═══ */
+
+/* Fade: pure opacity, no movement */
+@keyframes ste-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Slide Up: comes from well below, NO opacity fade so it's a pure slide */
+@keyframes ste-slide-up {
+    from { opacity: 0; transform: translateY(80px); }
+    20%  { opacity: 1; }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Slide Down: drops in from above */
+@keyframes ste-slide-down {
+    from { opacity: 0; transform: translateY(-80px); }
+    20%  { opacity: 1; }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Slide Left: enters from the right side */
+@keyframes ste-slide-left {
+    from { opacity: 0; transform: translateX(100px); }
+    20%  { opacity: 1; }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Slide Right: enters from the left side */
+@keyframes ste-slide-right {
+    from { opacity: 0; transform: translateX(-100px); }
+    20%  { opacity: 1; }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Reveal: horizontal clip-path wipe — starts visible, clip does the work */
+@keyframes ste-reveal {
+    from { opacity: 1; clip-path: inset(0 100% 0 0); }
+    to   { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+
+/* Bounce: springs up from below with overshoot */
+@keyframes ste-bounce {
+    0%   { opacity: 0; transform: translateY(80px); }
+    40%  { opacity: 1; transform: translateY(-20px); }
+    65%  { transform: translateY(10px); }
+    85%  { transform: translateY(-5px); }
+    100% { transform: translateY(0); }
+}
+
+/* Zoom In: scales up from small */
+@keyframes ste-zoom-in {
+    from { opacity: 0; transform: scale(0.3); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* Zoom Out: scales down from large */
+@keyframes ste-zoom-out {
+    from { opacity: 0; transform: scale(1.8); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* Flip: 3D flip rotation */
+@keyframes ste-flip {
+    from { opacity: 0; transform: perspective(400px) rotateY(90deg); }
+    40%  { opacity: 1; transform: perspective(400px) rotateY(-15deg); }
+    70%  { transform: perspective(400px) rotateY(10deg); }
+    to   { transform: perspective(400px) rotateY(0); }
+}
+
+/* Typewriter: reveals character by character via width */
+@keyframes ste-typewriter {
+    from { max-width: 0; opacity: 1; }
+    to   { max-width: 100%; opacity: 1; }
+}
+/* Typewriter needs overflow hidden and nowrap on the element */
+[data-ste-anim="typewriter"] {
+    overflow: hidden;
+    white-space: nowrap;
+}
