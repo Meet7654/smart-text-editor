@@ -23,7 +23,7 @@
         </div>
         <div class="ste-hero-stats">
             <div class="ste-stat"><span class="ste-stat-num">50+</span><span class="ste-stat-label">Google Fonts</span></div>
-            <div class="ste-stat"><span class="ste-stat-num">48</span><span class="ste-stat-label">Style Presets</span></div>
+            <div class="ste-stat"><span class="ste-stat-num">36</span><span class="ste-stat-label">Style Presets</span></div>
             <div class="ste-stat"><span class="ste-stat-num">11</span><span class="ste-stat-label">Animations</span></div>
             <div class="ste-stat"><span class="ste-stat-num">5</span><span class="ste-stat-label">Effect Types</span></div>
         </div>
@@ -593,6 +593,161 @@
                     <span class="ste-demo-text" style="font-size:40px;font-weight:800;font-family:'Permanent Marker',cursive;color:#1e1e1e;text-shadow:2px 2px 0 #fbbf24;">Marker Pop</span>
                     <span class="ste-demo-text" style="font-size:36px;font-weight:300;font-family:'Josefin Sans',sans-serif;letter-spacing:12px;color:#888;text-shadow:0 0 20px rgba(99,102,241,.4);">ELEGANT</span>
                 </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ PRICING SECTION ═══ -->
+<section id="pricing" class="ste-section">
+    <div class="ste-container">
+        <div class="ste-section-header">
+            <span class="ste-section-badge">Pricing</span>
+            <h2 class="ste-section-title">Simple, Transparent Pricing</h2>
+            <p class="ste-section-sub">Choose the plan that fits your needs. Start free and upgrade anytime.</p>
+        </div>
+
+        <div class="ste-pricing-grid">
+            <!-- Free Plan -->
+            <div class="ste-pricing-card">
+                <div class="ste-pricing-header">
+                    <h3 class="ste-pricing-name">Free</h3>
+                    <p class="ste-pricing-desc">Perfect for getting started</p>
+                    <div class="ste-pricing-price">
+                        <span class="ste-pricing-amount">$0</span>
+                        <span class="ste-pricing-period">/month</span>
+                    </div>
+                </div>
+                <ul class="ste-pricing-features">
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Basic text formatting
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        10 Google Fonts
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        5 Style Presets
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Text color &amp; highlight
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        HTML source view
+                    </li>
+                    <li class="ste-pricing-disabled">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        Gradient, 3D &amp; Glow effects
+                    </li>
+                    <li class="ste-pricing-disabled">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        Scroll animations
+                    </li>
+                    <li class="ste-pricing-disabled">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        Priority support
+                    </li>
+                </ul>
+                <a href="#editor" class="ste-btn ste-btn-outline ste-pricing-btn">Get Started Free</a>
+            </div>
+
+            <!-- Pro Plan (Featured) -->
+            <div class="ste-pricing-card ste-pricing-featured">
+                <div class="ste-pricing-popular">Most Popular</div>
+                <div class="ste-pricing-header">
+                    <h3 class="ste-pricing-name">Pro</h3>
+                    <p class="ste-pricing-desc">For creators and professionals</p>
+                    <div class="ste-pricing-price">
+                        <span class="ste-pricing-amount">$5</span>
+                        <span class="ste-pricing-period">/month</span>
+                    </div>
+                </div>
+                <ul class="ste-pricing-features">
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Everything in Free
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        50+ Google Fonts
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        All 36 Style Presets
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Gradient, 3D &amp; Glow effects
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        11 Scroll Animations
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Table editor with merge/split
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        HTML &amp; CSS export
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Email support
+                    </li>
+                </ul>
+                <a href="<?php echo esc_url( home_url( '/checkout/?plan=pro' ) ); ?>" class="ste-btn ste-btn-primary ste-pricing-btn">Get Started</a>
+            </div>
+
+            <!-- Business Plan -->
+            <div class="ste-pricing-card">
+                <div class="ste-pricing-header">
+                    <h3 class="ste-pricing-name">Business</h3>
+                    <p class="ste-pricing-desc">For teams and agencies</p>
+                    <div class="ste-pricing-price">
+                        <span class="ste-pricing-amount">$15</span>
+                        <span class="ste-pricing-period">/month</span>
+                    </div>
+                </div>
+                <ul class="ste-pricing-features">
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Everything in Pro
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Unlimited custom presets
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Custom font uploads
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        White-label branding
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Up to 10 team members
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Multisite license
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Priority support
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Early access to new features
+                    </li>
+                </ul>
+                <a href="<?php echo esc_url( home_url( '/checkout/?plan=business' ) ); ?>" class="ste-btn ste-btn-outline ste-pricing-btn">Get Started</a>
             </div>
         </div>
     </div>

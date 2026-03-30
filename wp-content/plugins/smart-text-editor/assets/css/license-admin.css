@@ -1,0 +1,288 @@
+/* ============================================================
+   Smart Text Editor — License Admin Page
+   ============================================================ */
+
+.ste-license-wrap { max-width: 1020px; }
+
+/* Status bar */
+.ste-license-status {
+    margin: 20px 0 28px;
+    padding: 20px 24px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    border-left: 4px solid #6366f1;
+}
+.ste-license-status-inner { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.ste-license-plan-badge {
+    display: inline-block;
+    padding: 6px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+.ste-badge-free { background: #f3f4f6; color: #6b7280; }
+.ste-badge-pro { background: rgba(99,102,241,.1); color: #6366f1; }
+.ste-badge-business { background: rgba(234,179,8,.1); color: #ca8a04; }
+.ste-license-key-info { display: flex; align-items: center; gap: 16px; color: #666; font-size: 13px; }
+.ste-license-key-display {
+    font-family: 'Courier New', monospace;
+    background: #f9fafb;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid #e5e5e5;
+    font-size: 13px;
+    letter-spacing: .5px;
+}
+.ste-license-date { color: #999; }
+
+/* Plans grid */
+.ste-plans-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 36px;
+}
+.ste-plan-card {
+    position: relative;
+    padding: 28px 24px;
+    background: #fff;
+    border: 2px solid #e5e5e5;
+    border-radius: 12px;
+    text-align: center;
+    transition: all .2s;
+}
+.ste-plan-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.06); }
+.ste-plan-active { border-color: #6366f1; box-shadow: 0 4px 20px rgba(99,102,241,.12); }
+.ste-plan-popular { border-color: #6366f1; }
+
+.ste-plan-tag {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 3px 14px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    white-space: nowrap;
+}
+.ste-tag-active { background: #6366f1; color: #fff; }
+.ste-tag-popular { background: linear-gradient(135deg, #6366f1, #a855f7); color: #fff; }
+
+.ste-plan-card h2 { margin: 8px 0 4px; font-size: 22px; }
+.ste-plan-price { margin-bottom: 20px; }
+.ste-plan-amount { font-size: 40px; font-weight: 800; color: #111; letter-spacing: -1px; }
+.ste-plan-period { font-size: 14px; color: #999; }
+
+/* Feature list */
+.ste-plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px;
+    text-align: left;
+    font-size: 13px;
+    line-height: 1;
+}
+.ste-plan-features li {
+    padding: 7px 0 7px 24px;
+    position: relative;
+    color: #555;
+    border-bottom: 1px solid #f5f5f5;
+}
+.ste-plan-features li:last-child { border-bottom: none; }
+.ste-plan-features li::before {
+    content: '\2717';
+    position: absolute;
+    left: 0;
+    color: #d1d5db;
+    font-weight: 700;
+    font-size: 12px;
+}
+.ste-plan-features li.ste-feat-yes { color: #333; }
+.ste-plan-features li.ste-feat-yes::before { content: '\2713'; color: #10b981; }
+.ste-plan-features li.ste-feat-no { color: #bbb; }
+
+/* Buttons */
+.ste-plan-btn {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+    border: none;
+    font-family: inherit;
+    transition: all .2s;
+    box-sizing: border-box;
+}
+.ste-plan-btn-current {
+    background: #f3f4f6;
+    color: #6b7280;
+    cursor: default;
+}
+.ste-plan-btn-upgrade {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(99,102,241,.3);
+}
+.ste-plan-btn-upgrade:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(99,102,241,.4);
+    color: #fff !important;
+}
+.ste-plan-btn-downgrade {
+    background: #fff;
+    color: #ef4444;
+    border: 1px solid #fca5a5;
+    cursor: pointer;
+    width: 100%;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+}
+.ste-plan-btn-downgrade:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+}
+
+/* Activate section */
+.ste-activate-section {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+}
+.ste-activate-section h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+.ste-activate-desc {
+    color: #777;
+    font-size: 14px;
+    margin: 0 0 24px;
+}
+
+/* Purchase cards */
+.ste-purchase-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+.ste-purchase-card {
+    padding: 20px;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    text-align: center;
+    background: #fafafa;
+}
+.ste-purchase-card h3 { margin: 0 0 6px; font-size: 16px; }
+.ste-purchase-price {
+    font-size: 32px;
+    font-weight: 800;
+    color: #111;
+    margin: 0 0 8px;
+}
+.ste-purchase-price span { font-size: 14px; font-weight: 400; color: #999; }
+.ste-purchase-desc {
+    font-size: 12px;
+    color: #888;
+    margin: 0 0 14px;
+    line-height: 1.5;
+}
+.ste-purchase-btn {
+    display: inline-block;
+    padding: 10px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #fff !important;
+    transition: all .2s;
+}
+.ste-purchase-btn-pro {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 2px 8px rgba(99,102,241,.3);
+}
+.ste-purchase-btn-pro:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(99,102,241,.4);
+}
+.ste-purchase-btn-biz {
+    background: linear-gradient(135deg, #ca8a04, #eab308);
+    box-shadow: 0 2px 8px rgba(202,138,4,.3);
+}
+.ste-purchase-btn-biz:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(202,138,4,.4);
+}
+
+/* Activate form */
+.ste-activate-form-wrap {
+    padding-top: 24px;
+    border-top: 1px solid #eee;
+}
+.ste-activate-form-wrap h3 { margin: 0 0 12px; font-size: 15px; }
+.ste-activate-input-row {
+    display: flex;
+    gap: 10px;
+    max-width: 520px;
+}
+.ste-license-input {
+    flex: 1;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #f9fafb;
+    text-transform: uppercase;
+}
+.ste-license-input:focus {
+    border-color: #6366f1;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(99,102,241,.15);
+}
+.ste-activate-btn {
+    white-space: nowrap;
+    padding: 8px 20px !important;
+    font-size: 13px !important;
+}
+.ste-activate-hint {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #999;
+}
+
+/* Deactivate */
+.ste-deactivate-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+.ste-deactivate-btn {
+    background: none;
+    border: 1px solid #fca5a5;
+    color: #ef4444;
+    padding: 8px 20px;
+    font-size: 13px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s;
+}
+.ste-deactivate-btn:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+}

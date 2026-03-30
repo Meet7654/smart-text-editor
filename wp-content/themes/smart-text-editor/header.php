@@ -25,6 +25,7 @@
             <a href="#editor" class="ste-nav-link">Try Editor</a>
             <a href="#fonts" class="ste-nav-link">Fonts</a>
             <a href="#styles" class="ste-nav-link">Styles</a>
+            <a href="#pricing" class="ste-nav-link">Pricing</a>
             <a href="#editor" class="ste-nav-btn">Start Writing</a>
         </nav>
         <button class="ste-mobile-toggle" aria-label="Menu">

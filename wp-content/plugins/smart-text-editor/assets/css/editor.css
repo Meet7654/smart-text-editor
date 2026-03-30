@@ -111,9 +111,9 @@
 
 /* ═══ EDITOR CANVAS ═══ */
 #ste-editor {
-    min-height: 400px; padding: 32px 40px; font-size: 16px; line-height: 1.8;
+    min-height: 400px; max-height: 70vh; padding: 32px 40px; font-size: 16px; line-height: 1.8;
     color: #e0e0e0; outline: none; caret-color: #6366f1;
-    overflow-wrap: break-word; background: #15151d;
+    overflow-wrap: break-word; overflow-y: auto; background: #15151d;
 }
 #ste-editor:empty::before { content: attr(data-placeholder); color: #555; pointer-events: none; font-style: italic; }
 #ste-editor h1 { font-size: 2.2em; font-weight: 800; margin: .3em 0; line-height: 1.2; color: #fff; }
@@ -402,3 +402,52 @@ body:has(#ste-wrap.ste-light) .ste-mt { color: #999; }
 body:has(#ste-wrap.ste-light) .ste-mt:hover { color: #333; }
 body:has(#ste-wrap.ste-light) .ste-code { background: #f5f5f7; color: #333; }
 body:has(#ste-wrap.ste-light) .ste-modal-foot { border-top-color: #eee; }
+
+/* ── Plan Gating ── */
+
+/* Locked buttons & tabs */
+.ste-locked {
+    position: relative;
+    opacity: .45;
+    cursor: not-allowed !important;
+    pointer-events: auto !important;
+}
+.ste-locked::after {
+    content: '\1F512';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    font-size: 8px;
+    line-height: 1;
+    pointer-events: none;
+}
+/* Locked style tab buttons */
+button.ste-st.ste-locked::after {
+    top: 2px;
+    right: 2px;
+}
+/* Locked preset items */
+.ste-preset-item.ste-locked {
+    opacity: .35;
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+/* Locked font options */
+#ste-font-family option:disabled {
+    color: #666;
+    font-style: italic;
+}
+/* Plan badge in editor footer */
+.ste-plan-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    border-radius: 3px;
+    margin-left: 8px;
+}
+.ste-plan-badge-free { background: #333; color: #888; }
+.ste-plan-badge-pro { background: rgba(99,102,241,.15); color: #818cf8; }
+.ste-plan-badge-business { background: rgba(234,179,8,.15); color: #eab308; }

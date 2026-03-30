@@ -82,6 +82,9 @@
         /* Ensure Enter creates <p> instead of <div> in Chrome */
         try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) {}
 
+        /* ━━━ Plan gating ━━━ */
+        initPlanGating();
+
         if (!editor.innerHTML.trim()) editor.innerHTML = '<p><br></p>';
 
         /* Prevent editor from becoming completely empty */
@@ -993,6 +996,15 @@
                 if (tabBtn) tabBtn.click();
             });
         });
+        /* Presets button */
+        var presetsBtn = document.getElementById('ste-btn-presets');
+        if (presetsBtn) {
+            presetsBtn.addEventListener('click', function () {
+                var bar = document.getElementById('ste-style-bar');
+                if (bar && bar.classList.contains('ste-collapsed')) bar.classList.remove('ste-collapsed');
+                switchTab('presets');
+            });
+        }
     }
     /* ━━━ Day / Night mode ━━━ */
     function initDayNight() {
@@ -1092,12 +1104,9 @@
     var DEFAULT_PRESETS = [
         /* ── Glow & Neon ── */
         { name: 'Neon Glow', css: 'color: #0ff; text-shadow: 0 0 7px #0ff, 0 0 14px #0ff, 0 0 28px #0ff; font-weight: 700;', cls: 'ste-styled' },
-        { name: 'Neon Pink', css: 'color: #ff00ff; text-shadow: 0 0 7px #ff00ff, 0 0 14px #ff00ff, 0 0 28px #ff00ff; font-weight: 700;', cls: 'ste-styled' },
-        { name: 'Neon Orange', css: 'color: #ff9500; text-shadow: 0 0 7px #ff9500, 0 0 14px #ff6a00, 0 0 28px #ff4500; font-weight: 700;', cls: 'ste-styled' },
         { name: 'Cyber Green', css: 'color: #00ff41; text-shadow: 0 0 5px #00ff41, 0 0 15px #00ff41; font-family: monospace; font-weight: 700;', cls: 'ste-styled' },
         { name: 'Frosted', css: 'color: #a8d8ea; text-shadow: 0 0 10px rgba(168,216,234,0.8), 0 0 20px rgba(168,216,234,0.4); font-weight: 600;', cls: 'ste-styled' },
         { name: 'Fire', css: 'color: #ff6600; text-shadow: 0 0 5px #ff6600, 0 0 12px #ff3300, 0 0 24px #ff0000; font-weight: 800;', cls: 'ste-styled' },
-        { name: 'Electric Blue', css: 'color: #00bfff; text-shadow: 0 0 8px #00bfff, 0 0 16px #0080ff, 0 0 30px #0040ff; font-weight: 700;', cls: 'ste-styled' },
         /* ── Gradients ── */
         { name: 'Gold Luxury', css: 'background-image: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; font-family: Georgia, serif;', cls: 'ste-styled ste-gradient-text' },
         { name: 'Ocean Wave', css: 'background-image: linear-gradient(90deg, #0077b6, #00b4d8, #90e0ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;', cls: 'ste-styled ste-gradient-text' },
@@ -1120,8 +1129,6 @@
         { name: 'Comic 3D', css: 'color: #f1c40f; text-shadow: 2px 2px 0 #e67e22, 4px 4px 0 #d35400, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; font-weight: 900;', cls: 'ste-styled' },
         /* ── Outline & Stroke ── */
         { name: 'Outline', css: 'color: transparent; -webkit-text-stroke: 2px #4f46e5; font-weight: 800;', cls: 'ste-styled' },
-        { name: 'Outline Red', css: 'color: transparent; -webkit-text-stroke: 2px #e74c3c; font-weight: 800;', cls: 'ste-styled' },
-        { name: 'Outline Gold', css: 'color: transparent; -webkit-text-stroke: 1.5px #d4a017; font-weight: 800;', cls: 'ste-styled' },
         { name: 'Thick Outline', css: 'color: transparent; -webkit-text-stroke: 3px #1a1a2e; font-weight: 900;', cls: 'ste-styled' },
         /* ── Typography ── */
         { name: 'Elegant Serif', css: 'color: #2c3e50; font-family: Georgia, serif; font-style: italic; letter-spacing: 2px;', cls: 'ste-styled' },
@@ -1130,16 +1137,8 @@
         { name: 'Bold Impact', css: 'color: #111; font-family: Impact, sans-serif; text-transform: uppercase; letter-spacing: 2px;', cls: 'ste-styled' },
         { name: 'Handwritten', css: 'color: #5c4033; font-family: cursive; font-size: 1.1em; font-weight: 400;', cls: 'ste-styled' },
         { name: 'Small Caps', css: 'color: #34495e; font-family: Georgia, serif; font-variant: small-caps; letter-spacing: 1px; font-weight: 600;', cls: 'ste-styled' },
-        /* ── Color Styles ── */
-        { name: 'Blood Red', css: 'color: #8b0000; font-weight: 700;', cls: 'ste-styled' },
-        { name: 'Royal Purple', css: 'color: #6a0dad; font-weight: 700;', cls: 'ste-styled' },
-        { name: 'Forest Green', css: 'color: #228b22; font-weight: 700;', cls: 'ste-styled' },
-        { name: 'Coral', css: 'color: #ff6f61; font-weight: 600;', cls: 'ste-styled' },
-        { name: 'Steel Blue', css: 'color: #4682b4; font-weight: 600;', cls: 'ste-styled' },
         /* ── Special ── */
         { name: 'Highlight Yellow', css: 'background-color: #fff176; color: #333; padding: 2px 6px; font-weight: 600;', cls: 'ste-styled' },
-        { name: 'Highlight Green', css: 'background-color: #a5d6a7; color: #1b5e20; padding: 2px 6px; font-weight: 600;', cls: 'ste-styled' },
-        { name: 'Highlight Blue', css: 'background-color: #90caf9; color: #0d47a1; padding: 2px 6px; font-weight: 600;', cls: 'ste-styled' },
         { name: 'Tag Dark', css: 'background-color: #1a1a2e; color: #eee; padding: 2px 8px; border-radius: 3px; font-family: monospace; font-size: 0.9em;', cls: 'ste-styled' },
         { name: 'Tag Blue', css: 'background-color: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 0.9em;', cls: 'ste-styled' },
         { name: 'Underline Accent', css: 'color: #333; border-bottom: 3px solid #4f46e5; padding-bottom: 2px; font-weight: 600;', cls: 'ste-styled' },
@@ -1212,5 +1211,122 @@
         return lines.join('\n');
     }
     function fmtHtml(h) { var lv = 0; return h.replace(/></g, '>\n<').split('\n').map(function (l) { l = l.trim(); if (l.match(/^<\/(p|h[1-6]|ul|ol|li|div|blockquote|table|thead|tbody|tr)/)) lv = Math.max(0, lv - 1); var pad = '  '.repeat(lv); if (l.match(/^<(p|h[1-6]|ul|ol|li|div|blockquote|table|thead|tbody|tr)/) && !l.match(/\/>$/)) lv++; return pad + l; }).join('\n'); }
+
+    /* ━━━ Plan Gating ━━━ */
+    function initPlanGating() {
+        var cfg = window.stePlan;
+        if (!cfg || cfg.plan === 'business') return; // Business has everything
+
+        var featureLabels = {
+            effects:      'Style Effects (Gradient, 3D, Glow, Shadow)',
+            animations:   'Scroll Animations',
+            tableEditor:  'Table Editor',
+            exportCss:    'HTML/CSS Export',
+            customPresets: 'Custom Presets'
+        };
+
+        /* Show upgrade modal */
+        function showUpgrade(featureKey) {
+            var modal = document.getElementById('ste-upgrade-modal');
+            var msg   = document.getElementById('ste-upgrade-msg');
+            if (!modal) return;
+            var label = featureLabels[featureKey] || featureKey;
+            var minPlan = (featureKey === 'customPresets') ? 'Business' : 'Pro';
+            msg.innerHTML = '<strong>' + escHtml(label) + '</strong> is available on the <strong>' + minPlan + '</strong> plan and above.';
+            modal.classList.remove('ste-hidden');
+        }
+
+        /* Close upgrade modal */
+        var upgradeModal = document.getElementById('ste-upgrade-modal');
+        if (upgradeModal) {
+            upgradeModal.querySelector('.ste-modal-x').addEventListener('click', function () {
+                upgradeModal.classList.add('ste-hidden');
+            });
+            upgradeModal.addEventListener('click', function (e) {
+                if (e.target === upgradeModal) upgradeModal.classList.add('ste-hidden');
+            });
+        }
+
+        /* Gate buttons/tabs with data-ste-feature */
+        document.querySelectorAll('[data-ste-feature]').forEach(function (el) {
+            var feature = el.getAttribute('data-ste-feature');
+            if (cfg[feature]) return; // feature is available on current plan
+
+            el.classList.add('ste-locked');
+            el.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                showUpgrade(feature);
+            }, true);
+        });
+
+        /* Gate fonts: lock options beyond the free limit */
+        if (cfg.plan === 'free') {
+            var fontSelect = document.getElementById('ste-font-family');
+            if (fontSelect) {
+                var freeFonts = cfg.freeFonts || [];
+                var opts = fontSelect.querySelectorAll('option[value]');
+                opts.forEach(function (opt) {
+                    var val = opt.value;
+                    if (!val) return; // placeholder
+                    var allowed = false;
+                    for (var i = 0; i < freeFonts.length; i++) {
+                        if (val === freeFonts[i]) { allowed = true; break; }
+                    }
+                    if (!allowed) {
+                        opt.disabled = true;
+                        opt.textContent = opt.textContent + ' (Pro)';
+                    }
+                });
+            }
+
+            /* Gate presets: only first N presets available */
+            var origRenderPresets = window._steOrigRenderPresets;
+            // We'll handle this in the presets render via cfg.maxPresets
+        }
+
+        /* Patch preset rendering to lock excess presets */
+        patchPresetRendering();
+
+        /* Gate preset saving for non-business plans */
+        if (!cfg.customPresets) {
+            var saveBtn = document.getElementById('ste-preset-save');
+            if (saveBtn) {
+                saveBtn.classList.add('ste-locked');
+                var nameInput = document.getElementById('ste-preset-name');
+                saveBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    showUpgrade('customPresets');
+                }, true);
+            }
+        }
+    }
+
+    /* Patch renderPresets to respect plan limits */
+    var _origRenderPresets = null;
+    var _patchedRenderPresets = false;
+    function patchPresetRendering() {
+        if (_patchedRenderPresets) return;
+        _patchedRenderPresets = true;
+
+        var cfg = window.stePlan;
+        if (!cfg || cfg.maxPresets >= 999) return;
+
+        var list = document.getElementById('ste-presets-list');
+        if (!list) return;
+
+        // Use MutationObserver to lock excess presets after each render
+        var observer = new MutationObserver(function () {
+            var items = list.querySelectorAll('.ste-preset-item');
+            items.forEach(function (item, idx) {
+                if (idx >= cfg.maxPresets && item.classList.contains('ste-preset-default')) {
+                    item.classList.add('ste-locked');
+                    item.setAttribute('title', 'Upgrade to Pro to unlock this preset');
+                }
+            });
+        });
+        observer.observe(list, { childList: true });
+    }
 
 })();

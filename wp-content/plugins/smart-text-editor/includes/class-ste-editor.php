@@ -17,6 +17,7 @@ class STE_Editor {
         add_action( 'admin_footer', array( __CLASS__, 'footer_credit' ) );
         add_filter( 'wp_kses_allowed_html', array( __CLASS__, 'allow_editor_html' ), 10, 2 );
         add_filter( 'safe_style_css', array( __CLASS__, 'allow_css_properties' ) );
+        add_action( 'save_post', array( __CLASS__, 'enforce_plan_on_save' ), 10, 2 );
     }
 
     public static function disable_gutenberg( $use, $pt ) {
@@ -45,6 +46,7 @@ class STE_Editor {
         );
         wp_enqueue_style( 'ste-editor', STE_PLUGIN_URL . 'assets/css/editor.css', array(), STE_VERSION );
         wp_enqueue_script( 'ste-editor', STE_PLUGIN_URL . 'assets/js/editor.js', array(), STE_VERSION, true );
+        wp_localize_script( 'ste-editor', 'stePlan', STE_License::js_config() );
     }
 
     public static function allow_editor_html( $allowed, $context ) {
@@ -96,8 +98,11 @@ class STE_Editor {
         $content = $post->post_content;
         // Convert <!--more--> to visual placeholder for editing
         $display_content = str_replace( '<!--more-->', '<hr class="ste-more-tag">', $content );
+        $plan      = STE_License::get_plan();
+        $plan_data = STE_License::get_plan_data();
+        $free_fonts = STE_License::get_free_fonts();
         ?>
-        <div id="ste-wrap">
+        <div id="ste-wrap" data-ste-plan="<?php echo esc_attr( $plan ); ?>">
 
             <!-- ═══ ROW 1: Main Toolbar ═══ -->
             <div id="ste-toolbar">
@@ -232,7 +237,7 @@ class STE_Editor {
                 <button type="button" id="ste-btn-link" title="Insert Link (Ctrl+K)" class="ste-tb"><span class="dashicons dashicons-admin-links"></span></button>
                 <button type="button" data-cmd="unlink" title="Remove Link" class="ste-tb"><span class="dashicons dashicons-editor-unlink"></span></button>
                 <button type="button" id="ste-btn-image" title="Insert Image" class="ste-tb"><span class="dashicons dashicons-format-image"></span></button>
-                <button type="button" id="ste-btn-table" title="Insert Table" class="ste-tb"><span class="dashicons dashicons-grid-view"></span></button>
+                <button type="button" id="ste-btn-table" title="Insert Table" class="ste-tb" data-ste-feature="tableEditor"><span class="dashicons dashicons-grid-view"></span></button>
                 <div class="ste-sep"></div>
 
                 <label class="ste-tb-clr" title="Text color">
@@ -245,10 +250,11 @@ class STE_Editor {
                 </label>
                 <div class="ste-sep"></div>
 
-                <button type="button" class="ste-tb ste-tb-fx" id="ste-quick-gradient" title="Quick Gradient"><span style="background:linear-gradient(90deg,#ff6b6b,#48dbfb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800;font-size:14px;">G</span></button>
-                <button type="button" class="ste-tb ste-tb-fx" id="ste-quick-shadow" title="Quick Shadow"><span style="text-shadow:2px 2px 0 #666;font-weight:800;font-size:14px;">S</span></button>
-                <button type="button" class="ste-tb ste-tb-fx" id="ste-quick-3d" title="Quick 3D"><span style="text-shadow:1px 1px 0 #888,2px 2px 0 #777;font-weight:800;font-size:12px;">3D</span></button>
-                <button type="button" class="ste-tb ste-tb-fx" id="ste-quick-glow" title="Quick Glow"><span style="text-shadow:0 0 8px #00ffff;color:#00ffff;font-weight:800;font-size:14px;">G</span></button>
+                <button type="button" class="ste-tb ste-tb-fx" id="ste-quick-gradient" title="Quick Gradient" data-ste-feature="effects"><span style="background:linear-gradient(90deg,#ff6b6b,#48dbfb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800;font-size:14px;">G</span></button>
+                <button type="button" class="ste-tb ste-tb-fx" id="ste-quick-shadow" title="Quick Shadow" data-ste-feature="effects"><span style="text-shadow:2px 2px 0 #666;font-weight:800;font-size:14px;">S</span></button>
+                <button type="button" class="ste-tb ste-tb-fx" id="ste-quick-3d" title="Quick 3D" data-ste-feature="effects"><span style="text-shadow:1px 1px 0 #888,2px 2px 0 #777;font-weight:800;font-size:12px;">3D</span></button>
+                <button type="button" class="ste-tb ste-tb-fx" id="ste-quick-glow" title="Quick Glow" data-ste-feature="effects"><span style="text-shadow:0 0 8px #00ffff;color:#00ffff;font-weight:800;font-size:14px;">G</span></button>
+                <button type="button" class="ste-tb ste-tb-fx" id="ste-btn-presets" title="Style Presets"><span class="dashicons dashicons-art"></span></button>
                 <div class="ste-sep"></div>
 
                 <button type="button" data-cmd="indent" title="Increase Indent" class="ste-tb"><span class="dashicons dashicons-editor-indent"></span></button>
@@ -268,7 +274,7 @@ class STE_Editor {
                 <button type="button" id="ste-btn-copy-style" title="Copy Style" class="ste-tb">🎨</button>
                 <button type="button" id="ste-btn-paste-style" title="Paste Style" class="ste-tb">📋</button>
                 <button type="button" id="ste-btn-source" title="HTML Source" class="ste-tb ste-tb-txt">&lt;/&gt;</button>
-                <button type="button" id="ste-btn-export" title="Export HTML/CSS" class="ste-tb ste-tb-txt">Export</button>
+                <button type="button" id="ste-btn-export" title="Export HTML/CSS" class="ste-tb ste-tb-txt" data-ste-feature="exportCss">Export</button>
                 <div class="ste-sep"></div>
 
                 <button type="button" id="ste-btn-toggle-toolbar" title="Toggle Style Bar" class="ste-tb"><span class="dashicons dashicons-menu"></span></button>
@@ -279,14 +285,14 @@ class STE_Editor {
             <!-- ═══ ROW 2: Style Effects Bar ═══ -->
             <div id="ste-style-bar">
                 <div id="ste-style-tabs">
-                    <button type="button" class="ste-st active" data-tab="shadow">Shadow</button>
-                    <button type="button" class="ste-st" data-tab="gradient">Gradient</button>
-                    <button type="button" class="ste-st" data-tab="threed">3D</button>
-                    <button type="button" class="ste-st" data-tab="glow">Glow</button>
-                    <button type="button" class="ste-st" data-tab="anim">Animation</button>
-                    <button type="button" class="ste-st" data-tab="presets">Presets</button>
+                    <button type="button" class="ste-st<?php echo $plan !== 'free' ? ' active' : ''; ?>" data-tab="shadow" data-ste-feature="effects">Shadow</button>
+                    <button type="button" class="ste-st" data-tab="gradient" data-ste-feature="effects">Gradient</button>
+                    <button type="button" class="ste-st" data-tab="threed" data-ste-feature="effects">3D</button>
+                    <button type="button" class="ste-st" data-tab="glow" data-ste-feature="effects">Glow</button>
+                    <button type="button" class="ste-st" data-tab="anim" data-ste-feature="animations">Animation</button>
+                    <button type="button" class="ste-st<?php echo $plan === 'free' ? ' active' : ''; ?>" data-tab="presets">Presets</button>
                 </div>
-                <div class="ste-sp active" data-panel="shadow">
+                <div class="ste-sp<?php echo $plan !== 'free' ? ' active' : ''; ?>" data-panel="shadow">
                     <label>X <span class="ste-rv" data-for="shadow-x">0</span>px<input type="range" id="ste-shadow-x" min="-50" max="50" value="0"></label>
                     <label>Y <span class="ste-rv" data-for="shadow-y">0</span>px<input type="range" id="ste-shadow-y" min="-50" max="50" value="0"></label>
                     <label>Blur <span class="ste-rv" data-for="shadow-blur">0</span>px<input type="range" id="ste-shadow-blur" min="0" max="80" value="0"></label>
@@ -321,7 +327,7 @@ class STE_Editor {
                     <button type="button" class="ste-clear-fx" id="ste-anim-preview">Preview</button>
                     <button type="button" class="ste-clear-fx" data-clear="animation">Clear</button>
                 </div>
-                <div class="ste-sp" data-panel="presets">
+                <div class="ste-sp<?php echo $plan === 'free' ? ' active' : ''; ?>" data-panel="presets">
                     <div id="ste-presets-list"></div>
                     <div class="ste-preset-row"><input type="text" id="ste-preset-name" placeholder="Preset name…"><button type="button" class="ste-apply" id="ste-preset-save">Save</button></div>
                 </div>
@@ -340,7 +346,7 @@ class STE_Editor {
 
             <div id="ste-editor-footer">
                 <span id="ste-word-count">0 words</span>
-                <span>Created by Meet Patel</span>
+                <span>Created by Meet Patel <span class="ste-plan-badge ste-plan-badge-<?php echo esc_attr( $plan ); ?>"><?php echo esc_html( $plan_data['label'] ); ?> Plan</span></span>
             </div>
         </div>
 
@@ -459,7 +465,60 @@ class STE_Editor {
                 <div class="ste-modal-foot"><button type="button" id="ste-export-copy" class="ste-apply">Copy to Clipboard</button></div>
             </div>
         </div>
+
+        <!-- Upgrade modal -->
+        <div id="ste-upgrade-modal" class="ste-modal ste-hidden">
+            <div class="ste-modal-box" style="width:440px;">
+                <div class="ste-modal-head"><h3 id="ste-upgrade-title">Upgrade Required</h3><button type="button" class="ste-modal-x">&times;</button></div>
+                <div style="padding:24px;text-align:center;">
+                    <div style="font-size:48px;margin-bottom:12px;">&#128274;</div>
+                    <p id="ste-upgrade-msg" style="color:#666;font-size:14px;line-height:1.6;margin:0 0 20px;">This feature is available on the <strong>Pro</strong> plan and above.</p>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=ste-license' ) ); ?>" class="ste-apply" style="display:inline-block;padding:10px 28px;text-decoration:none;font-size:14px;">Upgrade Now</a>
+                    <p style="color:#999;font-size:12px;margin-top:12px;">Current plan: <strong><?php echo esc_html( $plan_data['label'] ); ?></strong></p>
+                </div>
+            </div>
+        </div>
         <?php
+    }
+
+    public static function enforce_plan_on_save( $post_id, $post ) {
+        if ( ! in_array( $post->post_type, self::$post_types, true ) ) return;
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+        if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+
+        $plan_data = STE_License::get_plan_data();
+        $content   = $post->post_content;
+        $changed   = false;
+
+        // Strip animations if not available
+        if ( empty( $plan_data['animations'] ) ) {
+            $new = preg_replace( '/\s*data-ste-anim="[^"]*"/', '', $content );
+            $new = preg_replace( '/\s*data-ste-anim-dur="[^"]*"/', '', $new );
+            if ( $new !== $content ) { $content = $new; $changed = true; }
+        }
+
+        // Strip gradient text styles if effects not available
+        if ( empty( $plan_data['effects'] ) ) {
+            // Remove background-clip gradient text effect
+            $new = preg_replace( '/\s*-webkit-background-clip:\s*text;?/', '', $content );
+            $new = preg_replace( '/\s*background-clip:\s*text;?/', '', $new );
+            $new = preg_replace( '/\s*-webkit-text-fill-color:\s*[^;]+;?/', '', $new );
+            // Remove text-shadow (used by shadow, 3D, glow)
+            $new = preg_replace( '/\s*text-shadow:\s*[^;]+;?/', '', $new );
+            if ( $new !== $content ) { $content = $new; $changed = true; }
+        }
+
+        // Strip tables if table editor not available
+        if ( empty( $plan_data['table_editor'] ) ) {
+            $new = preg_replace( '/<table[^>]*>[\s\S]*?<\/table>/i', '', $content );
+            if ( $new !== $content ) { $content = $new; $changed = true; }
+        }
+
+        if ( $changed ) {
+            remove_action( 'save_post', array( __CLASS__, 'enforce_plan_on_save' ), 10 );
+            wp_update_post( array( 'ID' => $post_id, 'post_content' => $content ) );
+            add_action( 'save_post', array( __CLASS__, 'enforce_plan_on_save' ), 10, 2 );
+        }
     }
 
     public static function footer_credit() {

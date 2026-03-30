@@ -16,6 +16,12 @@ function ste_theme_setup() {
 }
 add_action( 'after_setup_theme', 'ste_theme_setup' );
 
+/* ── Favicon ── */
+function ste_theme_favicon() {
+    echo '<link rel="icon" href="' . esc_url( STE_THEME_URI . '/assets/images/favicon.svg' ) . '" type="image/svg+xml">';
+}
+add_action( 'wp_head', 'ste_theme_favicon' );
+
 /* ── Enqueue assets ── */
 function ste_theme_assets() {
     // Google Fonts

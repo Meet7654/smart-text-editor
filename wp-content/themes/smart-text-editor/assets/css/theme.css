@@ -226,6 +226,40 @@ img { max-width: 100%; height: auto; }
 .ste-demo-text { display: inline-block; line-height: 1.2; }
 .ste-style-glow-bg { background: #0a0a12; }
 
+/* ── Pricing ── */
+.ste-pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: start; }
+.ste-pricing-card {
+    position: relative; padding: 36px 32px; border-radius: 16px; background: #fff;
+    border: 1px solid #f0f0f0; transition: all .3s;
+}
+.ste-pricing-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,.06); }
+.ste-pricing-featured {
+    border-color: #6366f1; box-shadow: 0 8px 40px rgba(99,102,241,.15);
+    transform: scale(1.04);
+}
+.ste-pricing-featured:hover { transform: scale(1.04) translateY(-4px); box-shadow: 0 16px 50px rgba(99,102,241,.2); }
+.ste-pricing-popular {
+    position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+    padding: 4px 18px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: #fff; background: linear-gradient(135deg, #6366f1, #a855f7);
+    border-radius: 50px; white-space: nowrap;
+}
+.ste-pricing-header { text-align: center; margin-bottom: 28px; }
+.ste-pricing-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; color: #111; }
+.ste-pricing-desc { font-size: 14px; color: #888; margin-bottom: 20px; }
+.ste-pricing-price { display: flex; align-items: baseline; justify-content: center; gap: 2px; }
+.ste-pricing-amount { font-size: 48px; font-weight: 900; color: #111; letter-spacing: -2px; line-height: 1; }
+.ste-pricing-period { font-size: 15px; color: #999; font-weight: 500; }
+.ste-pricing-features { list-style: none; padding: 0; margin: 0 0 28px; }
+.ste-pricing-features li {
+    display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    font-size: 14px; color: #444; border-bottom: 1px solid #f5f5f5;
+}
+.ste-pricing-features li:last-child { border-bottom: none; }
+.ste-pricing-features li svg { flex-shrink: 0; }
+.ste-pricing-disabled { color: #bbb !important; }
+.ste-pricing-btn { width: 100%; text-align: center; justify-content: center; }
+
 /* ── CTA ── */
 .ste-cta {
     padding: 100px 0; text-align: center;
@@ -272,6 +306,9 @@ img { max-width: 100%; height: auto; }
     .ste-live-toolbar { gap: 2px; padding: 8px; }
     .ste-style-demos { gap: 16px; }
     .ste-demo-text { font-size: 24px !important; }
+    .ste-pricing-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+    .ste-pricing-featured { transform: none; }
+    .ste-pricing-featured:hover { transform: translateY(-4px); }
 }
 @media (max-width: 480px) {
     .ste-footer-grid { grid-template-columns: 1fr; }

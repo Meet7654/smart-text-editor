@@ -21,21 +21,28 @@ define( 'STE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'STE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'STE_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 
+require_once STE_PLUGIN_DIR . 'includes/class-ste-license.php';
 require_once STE_PLUGIN_DIR . 'includes/class-ste-admin.php';
 require_once STE_PLUGIN_DIR . 'includes/class-ste-editor.php';
 require_once STE_PLUGIN_DIR . 'includes/class-ste-ajax.php';
 require_once STE_PLUGIN_DIR . 'includes/class-ste-shortcode.php';
+require_once STE_PLUGIN_DIR . 'includes/class-ste-checkout.php';
 
 function ste_init() {
+    STE_License::init();
     STE_Admin::init();
     STE_Editor::init();
     STE_Ajax::init();
     STE_Shortcode::init();
+    STE_Checkout::init();
 }
 add_action( 'plugins_loaded', 'ste_init' );
 
 /* Activation */
 function ste_activate() {
+    require_once STE_PLUGIN_DIR . 'includes/class-ste-checkout.php';
+    STE_Checkout::create_table();
+    update_option( 'ste_flush_rewrite', true );
     flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, 'ste_activate' );

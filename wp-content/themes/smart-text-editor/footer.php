@@ -20,6 +20,7 @@
                 <a href="#fonts">50+ Google Fonts</a>
                 <a href="#styles">Style Effects</a>
                 <a href="#editor">Live Editor</a>
+                <a href="#pricing">Pricing</a>
             </div>
             <div class="ste-footer-col">
                 <h4>Effects</h4>

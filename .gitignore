@@ -11,13 +11,6 @@ Thumbs.db
 # WordPress config (contains credentials)
 wp-config.php
 
-# Uploads
-wp-content/uploads/
-
-# Plugins and themes installed via package managers
-wp-content/plugins/
-wp-content/themes/
-
 # Cache and backup files
 wp-content/cache/
 wp-content/upgrade/
