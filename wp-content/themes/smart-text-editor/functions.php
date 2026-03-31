@@ -35,9 +35,15 @@ function ste_theme_assets() {
 }
 add_action( 'wp_enqueue_scripts', 'ste_theme_assets' );
 
-/* ── Custom page template ── */
+/* ── Custom page templates ── */
 function ste_theme_page_templates( $templates ) {
-    $templates['template-editor.php'] = __( 'Smart Text Editor', 'smart-text-editor-theme' );
+    $templates['template-editor.php']    = __( 'Smart Text Editor', 'smart-text-editor-theme' );
+    $templates['template-fullwidth.php'] = __( 'Full Width (No Sidebar)', 'smart-text-editor-theme' );
+    $templates['template-blank.php']     = __( 'Blank Canvas', 'smart-text-editor-theme' );
+    $templates['template-landing.php']   = __( 'Landing Page', 'smart-text-editor-theme' );
+    $templates['template-contact.php']   = __( 'Contact Page', 'smart-text-editor-theme' );
+    $templates['template-about.php']     = __( 'About Page', 'smart-text-editor-theme' );
+    $templates['template-blog.php']      = __( 'Blog / Posts', 'smart-text-editor-theme' );
     return $templates;
 }
 add_filter( 'theme_page_templates', 'ste_theme_page_templates' );

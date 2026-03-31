@@ -145,10 +145,24 @@
         if (copyBtn) {
             copyBtn.addEventListener('click', function () {
                 var key = document.getElementById('ste-success-key').textContent;
-                navigator.clipboard.writeText(key).then(function () {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(key).then(function () {
+                        copyBtn.classList.add('copied');
+                        setTimeout(function () { copyBtn.classList.remove('copied'); }, 2000);
+                    });
+                } else {
+                    // Fallback for non-HTTPS / older browsers
+                    var ta = document.createElement('textarea');
+                    ta.value = key;
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
                     copyBtn.classList.add('copied');
                     setTimeout(function () { copyBtn.classList.remove('copied'); }, 2000);
-                });
+                }
             });
         }
     }
