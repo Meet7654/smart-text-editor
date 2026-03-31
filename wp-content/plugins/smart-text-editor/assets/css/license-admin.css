@@ -13,7 +13,9 @@
     border-radius: 8px;
     border-left: 4px solid #6366f1;
 }
-.ste-license-status-inner { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.ste-license-status-inner { display: flex; flex-direction: column; align-items: flex-start; gap: 0; flex-wrap: wrap; }
+.ste-license-status-inner > .ste-license-plan-badge { margin-bottom: 12px; }
+.ste-license-status-inner > .ste-license-key-info { margin-bottom: 0; }
 .ste-license-plan-badge {
     display: inline-block;
     padding: 6px 18px;
@@ -26,6 +28,62 @@
 .ste-badge-free { background: #f3f4f6; color: #6b7280; }
 .ste-badge-pro { background: rgba(99,102,241,.1); color: #6366f1; }
 .ste-badge-business { background: rgba(234,179,8,.1); color: #ca8a04; }
+.ste-badge-trial { background: rgba(16,185,129,.1); color: #059669; }
+.ste-trial-tag {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 50px;
+    background: #059669;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    vertical-align: middle;
+}
+.ste-license-status-trial { border-left-color: #059669; }
+.ste-bar-trial { background: linear-gradient(90deg, #059669, #34d399); }
+.ste-trial-upgrade-hint {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: #92400e;
+    background: #fef3c7;
+    padding: 10px 14px;
+    border-radius: 6px;
+    line-height: 1.5;
+}
+.ste-trial-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    color: #fff;
+    background: linear-gradient(135deg, #059669, #10b981);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all .2s;
+    box-shadow: 0 2px 8px rgba(5,150,105,.3);
+}
+.ste-trial-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(5,150,105,.4);
+}
+.ste-trial-hint {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #999;
+}
+.ste-trial-expired-hint {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: #dc2626;
+    font-style: italic;
+}
 .ste-license-key-info { display: flex; align-items: center; gap: 16px; color: #666; font-size: 13px; }
 .ste-license-key-display {
     font-family: 'Courier New', monospace;
@@ -37,6 +95,138 @@
     letter-spacing: .5px;
 }
 .ste-license-date { color: #999; }
+.ste-license-cycle-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 50px;
+    background: #f0f9ff;
+    color: #0284c7;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+}
+
+/* Validity display */
+.ste-license-validity {
+    width: 100%;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.ste-validity-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+.ste-validity-label {
+    color: #888;
+    font-weight: 500;
+}
+.ste-validity-value {
+    font-weight: 600;
+    color: #333;
+}
+.ste-validity-ok { color: #059669; }
+.ste-validity-warning { color: #dc2626; font-weight: 700; }
+.ste-validity-free {
+    font-size: 13px;
+    color: #999;
+    font-style: italic;
+}
+.ste-validity-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.ste-validity-bar {
+    flex: 1;
+    height: 8px;
+    background: #f3f4f6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.ste-validity-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width .3s;
+}
+.ste-bar-ok { background: linear-gradient(90deg, #10b981, #34d399); }
+.ste-bar-warning { background: linear-gradient(90deg, #ef4444, #f87171); }
+.ste-validity-bar-label {
+    font-size: 12px;
+    color: #999;
+    white-space: nowrap;
+}
+
+/* Billing toggle */
+.ste-billing-toggle-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 0 0 24px;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+}
+.ste-billing-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #999;
+    cursor: pointer;
+    transition: color .2s;
+}
+.ste-billing-label.active { color: #111; font-weight: 700; }
+.ste-billing-switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    display: inline-block;
+}
+.ste-billing-switch input { opacity: 0; width: 0; height: 0; }
+.ste-billing-slider {
+    position: absolute;
+    inset: 0;
+    background: #d1d5db;
+    border-radius: 26px;
+    cursor: pointer;
+    transition: background .3s;
+}
+.ste-billing-slider::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 3px;
+    top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform .3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+.ste-billing-switch input:checked + .ste-billing-slider { background: #6366f1; }
+.ste-billing-switch input:checked + .ste-billing-slider::before { transform: translateX(22px); }
+.ste-billing-save-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 4px 10px;
+    border-radius: 50px;
+    letter-spacing: .3px;
+}
+.ste-plan-yearly-equiv {
+    font-size: 12px;
+    color: #059669;
+    font-weight: 600;
+    margin: -12px 0 16px;
+}
 
 /* Plans grid */
 .ste-plans-grid {

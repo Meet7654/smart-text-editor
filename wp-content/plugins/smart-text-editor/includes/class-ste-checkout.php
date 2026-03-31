@@ -67,6 +67,37 @@ class STE_Checkout {
         return ! empty( self::get_cf_app_id() ) && ! empty( self::get_cf_secret_key() );
     }
 
+    /**
+     * Check if FluentSMTP has at least one configured email connection.
+     */
+    public static function is_smtp_configured() {
+        $settings = get_option( 'fluentmail-settings', array() );
+        if ( empty( $settings ) || ! is_array( $settings ) ) return false;
+        if ( empty( $settings['connections'] ) || ! is_array( $settings['connections'] ) ) return false;
+
+        foreach ( $settings['connections'] as $conn ) {
+            if ( ! empty( $conn['provider_settings']['sender_email'] ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get the configured sender email from FluentSMTP.
+     */
+    public static function get_smtp_sender_email() {
+        $settings = get_option( 'fluentmail-settings', array() );
+        if ( empty( $settings['connections'] ) || ! is_array( $settings['connections'] ) ) return '';
+
+        foreach ( $settings['connections'] as $conn ) {
+            if ( ! empty( $conn['provider_settings']['sender_email'] ) ) {
+                return $conn['provider_settings']['sender_email'];
+            }
+        }
+        return '';
+    }
+
     public static function register_settings() {
         // Cashfree settings
         register_setting( 'ste_cashfree_settings', 'ste_cf_mode', array(
@@ -100,11 +131,13 @@ class STE_Checkout {
             customer_email VARCHAR(100) NOT NULL,
             customer_phone VARCHAR(20) DEFAULT '',
             amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-            currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+            currency VARCHAR(3) NOT NULL DEFAULT 'INR',
+            billing_cycle VARCHAR(10) NOT NULL DEFAULT 'monthly',
             payment_method VARCHAR(50) DEFAULT '',
             license_key VARCHAR(50) DEFAULT '',
             status VARCHAR(20) NOT NULL DEFAULT 'pending',
             cf_payment_id VARCHAR(50) DEFAULT '',
+            expires_at DATETIME DEFAULT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY plan (plan),
@@ -119,6 +152,30 @@ class STE_Checkout {
 
     public static function generate_order_number() {
         return 'STE-' . strtoupper( substr( uniqid(), -8 ) );
+    }
+
+    /**
+     * Look up the expiry date for a license key from the orders table.
+     */
+    public static function get_expiry_by_license_key( $license_key ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'ste_orders';
+        return $wpdb->get_var( $wpdb->prepare(
+            "SELECT expires_at FROM {$table} WHERE license_key = %s AND status = 'completed' LIMIT 1",
+            $license_key
+        ) );
+    }
+
+    /**
+     * Look up the billing cycle for a license key from the orders table.
+     */
+    public static function get_billing_cycle_by_license_key( $license_key ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'ste_orders';
+        return $wpdb->get_var( $wpdb->prepare(
+            "SELECT billing_cycle FROM {$table} WHERE license_key = %s AND status = 'completed' LIMIT 1",
+            $license_key
+        ) );
     }
 
     /* ══════════════════════════════════════
@@ -176,10 +233,13 @@ class STE_Checkout {
     public static function ajax_create_cf_order() {
         check_ajax_referer( 'ste_checkout_nonce', 'nonce' );
 
-        $plan  = isset( $_POST['plan'] ) ? sanitize_text_field( wp_unslash( $_POST['plan'] ) ) : '';
-        $name  = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
-        $email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-        $phone = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
+        $plan    = isset( $_POST['plan'] ) ? sanitize_text_field( wp_unslash( $_POST['plan'] ) ) : '';
+        $billing = isset( $_POST['billing'] ) ? sanitize_text_field( wp_unslash( $_POST['billing'] ) ) : 'monthly';
+        $name    = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
+        $email   = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+        $phone   = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
+
+        if ( ! in_array( $billing, array( 'monthly', 'yearly' ), true ) ) $billing = 'monthly';
 
         // Validate
         if ( ! in_array( $plan, array( 'pro', 'business' ), true ) ) {
@@ -199,9 +259,15 @@ class STE_Checkout {
             wp_send_json_error( array( 'message' => 'Payment gateway is not configured. Please contact the site administrator.' ) );
         }
 
+        if ( ! self::is_smtp_configured() ) {
+            wp_send_json_error( array( 'message' => 'Email delivery (FluentSMTP) is not configured. License keys cannot be sent. Please contact the site administrator.' ) );
+        }
+
         // Determine amount
         $plans  = STE_License::get_all_plans();
-        $amount = isset( $plans[ $plan ]['price_num'] ) ? floatval( $plans[ $plan ]['price_num'] ) : 0;
+        $is_yearly = ( 'yearly' === $billing );
+        $price_key = $is_yearly ? 'price_yearly_num' : 'price_num';
+        $amount = isset( $plans[ $plan ][ $price_key ] ) ? floatval( $plans[ $plan ][ $price_key ] ) : 0;
         $label  = isset( $plans[ $plan ]['label'] ) ? $plans[ $plan ]['label'] : $plan;
 
         // Create local order first
@@ -211,20 +277,21 @@ class STE_Checkout {
         $wpdb->insert( $wpdb->prefix . 'ste_orders', array(
             'order_number'   => $order_number,
             'plan'           => $plan,
+            'billing_cycle'  => $billing,
             'customer_name'  => $name,
             'customer_email' => $email,
             'customer_phone' => $phone,
             'amount'         => $amount,
-            'currency'       => 'USD',
+            'currency'       => 'INR',
             'status'         => 'pending',
             'created_at'     => current_time( 'mysql' ),
-        ), array( '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s' ) );
+        ), array( '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s' ) );
 
         // Create Cashfree order
         $cf_payload = array(
             'order_id'       => $order_number,
             'order_amount'   => $amount,
-            'order_currency' => 'USD',
+            'order_currency' => 'INR',
             'customer_details' => array(
                 'customer_id'    => 'cust_' . substr( md5( $email ), 0, 12 ),
                 'customer_name'  => $name,
@@ -234,6 +301,7 @@ class STE_Checkout {
             'order_meta' => array(
                 'return_url' => add_query_arg( array(
                     'plan'     => $plan,
+                    'billing'  => $billing,
                     'order_id' => $order_number,
                 ), home_url( '/checkout/' ) ),
             ),
@@ -332,6 +400,7 @@ class STE_Checkout {
                 'plan_label'  => ucfirst( $order->plan ),
                 'email'       => $order->customer_email,
                 'amount'      => number_format( $order->amount, 2 ),
+                'expires_at'  => isset( $order->expires_at ) ? $order->expires_at : '',
             );
         }
 
@@ -370,20 +439,26 @@ class STE_Checkout {
             }
         }
 
+        // Calculate expiry based on billing cycle
+        $billing_cycle = isset( $order->billing_cycle ) && 'yearly' === $order->billing_cycle ? 'yearly' : 'monthly';
+        $expiry_period = ( 'yearly' === $billing_cycle ) ? '+365 days' : '+30 days';
+        $expires_at    = date( 'Y-m-d H:i:s', strtotime( $expiry_period, current_time( 'timestamp' ) ) );
+
         // Update order
         $wpdb->update( $table, array(
             'status'         => 'completed',
             'license_key'    => $license_key,
             'cf_payment_id'  => $cf_payment_id,
             'payment_method' => $payment_method,
+            'expires_at'     => $expires_at,
         ), array( 'order_number' => $order_number ),
-        array( '%s', '%s', '%s', '%s' ), array( '%s' ) );
+        array( '%s', '%s', '%s', '%s', '%s' ), array( '%s' ) );
 
         // Send license key email to customer
         $plans = STE_License::get_all_plans();
         $label = isset( $plans[ $order->plan ]['label'] ) ? $plans[ $order->plan ]['label'] : $order->plan;
 
-        self::send_license_email( $order->customer_email, $order->customer_name, $label, $license_key, $order_number, $order->amount );
+        self::send_license_email( $order->customer_email, $order->customer_name, $label, $license_key, $order_number, $order->amount, $expires_at );
 
         return array(
             'success'     => true,
@@ -392,6 +467,7 @@ class STE_Checkout {
             'plan_label'  => $label,
             'email'       => $order->customer_email,
             'amount'      => number_format( $order->amount, 2 ),
+            'expires_at'  => $expires_at,
         );
     }
 
@@ -399,7 +475,7 @@ class STE_Checkout {
        SEND LICENSE KEY EMAIL
        ══════════════════════════════════════ */
 
-    public static function send_license_email( $to_email, $customer_name, $plan_label, $license_key, $order_number, $amount ) {
+    public static function send_license_email( $to_email, $customer_name, $plan_label, $license_key, $order_number, $amount, $expires_at = '' ) {
         $subject = sprintf( 'Your Smart Text Editor %s License Key', $plan_label );
         $site_url = home_url( '/' );
 
@@ -434,7 +510,8 @@ class STE_Checkout {
         <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;font-size:14px;color:#555;">
             <tr><td style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Order Number</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">' . esc_html( $order_number ) . '</td></tr>
             <tr><td style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Plan</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">' . esc_html( $plan_label ) . '</td></tr>
-            <tr><td style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Amount Paid</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">$' . esc_html( number_format( $amount, 2 ) ) . ' USD</td></tr>
+            <tr><td style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Amount Paid</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">₹' . esc_html( number_format( $amount, 2 ) ) . ' INR</td></tr>
+            <tr><td style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Valid Until</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">' . ( $expires_at ? esc_html( date_i18n( 'F j, Y', strtotime( $expires_at ) ) ) : 'N/A' ) . '</td></tr>
         </table>
 
         <!-- Activation Steps -->
@@ -546,11 +623,32 @@ class STE_Checkout {
         $mode   = self::get_cf_mode();
         $app_id = self::get_cf_app_id();
         $secret = self::get_cf_secret_key();
-        $webhook_url = rest_url( 'ste/v1/cashfree-webhook' );
+        $webhook_url    = rest_url( 'ste/v1/cashfree-webhook' );
+        $smtp_ready     = self::is_smtp_configured();
+        $smtp_email     = self::get_smtp_sender_email();
 
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'Payment Settings — Cashfree', 'smart-text-editor' ); ?></h1>
+
+            <!-- Email Delivery Status -->
+            <div style="max-width:640px;margin-top:20px;padding:18px 22px;border-radius:8px;border:1px solid <?php echo $smtp_ready ? '#a7f3d0' : '#fca5a5'; ?>;background:<?php echo $smtp_ready ? '#ecfdf5' : '#fef2f2'; ?>;">
+                <h2 style="margin:0 0 8px;font-size:15px;color:<?php echo $smtp_ready ? '#065f46' : '#991b1b'; ?>;">
+                    <?php echo $smtp_ready ? '&#10003; Email Delivery Ready' : '&#10007; Email Delivery Not Configured'; ?>
+                </h2>
+                <?php if ( $smtp_ready ) : ?>
+                    <p style="margin:0;font-size:13px;color:#065f46;">
+                        FluentSMTP is configured. Emails will be sent from <strong><?php echo esc_html( $smtp_email ); ?></strong>.
+                    </p>
+                <?php else : ?>
+                    <p style="margin:0 0 10px;font-size:13px;color:#991b1b;">
+                        FluentSMTP is not configured with a sender email. License keys and order confirmations <strong>cannot be delivered</strong>. Purchases are blocked until this is resolved.
+                    </p>
+                    <a href="<?php echo esc_url( admin_url( 'options-general.php?page=fluent-mail#/' ) ); ?>" class="button button-primary" style="background:#dc2626;border-color:#dc2626;">
+                        Configure FluentSMTP Now
+                    </a>
+                <?php endif; ?>
+            </div>
 
             <form method="post" action="options.php" style="max-width:640px;margin-top:20px;">
                 <?php settings_fields( 'ste_cashfree_settings' ); ?>
@@ -640,17 +738,22 @@ class STE_Checkout {
                         <tr>
                             <th style="width:130px;">Order #</th>
                             <th style="width:80px;">Plan</th>
+                            <th style="width:70px;">Billing</th>
                             <th>Customer</th>
                             <th>Email</th>
                             <th style="width:90px;">Amount</th>
                             <th style="width:90px;">Method</th>
                             <th>License Key</th>
                             <th style="width:80px;">Status</th>
+                            <th style="width:120px;">Expires</th>
                             <th style="width:140px;">Date</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ( $orders as $order ) : ?>
+                        <?php foreach ( $orders as $order ) :
+                            $order_billing = isset( $order->billing_cycle ) ? $order->billing_cycle : 'monthly';
+                            $order_expires = isset( $order->expires_at ) ? $order->expires_at : '';
+                        ?>
                         <tr>
                             <td><strong><?php echo esc_html( $order->order_number ); ?></strong></td>
                             <td>
@@ -661,9 +764,17 @@ class STE_Checkout {
                                     <?php echo esc_html( $order->plan ); ?>
                                 </span>
                             </td>
+                            <td>
+                                <span style="display:inline-block;padding:2px 8px;border-radius:50px;font-size:10px;font-weight:600;text-transform:uppercase;
+                                    <?php echo 'yearly' === $order_billing
+                                        ? 'background:#ecfdf5;color:#059669;'
+                                        : 'background:#f0f9ff;color:#0284c7;'; ?>">
+                                    <?php echo esc_html( $order_billing ); ?>
+                                </span>
+                            </td>
                             <td><?php echo esc_html( $order->customer_name ); ?></td>
                             <td><a href="mailto:<?php echo esc_attr( $order->customer_email ); ?>"><?php echo esc_html( $order->customer_email ); ?></a></td>
-                            <td>$<?php echo esc_html( number_format( $order->amount, 2 ) ); ?></td>
+                            <td>₹<?php echo esc_html( number_format( $order->amount, 2 ) ); ?></td>
                             <td><?php echo esc_html( $order->payment_method ?: '—' ); ?></td>
                             <td>
                                 <?php if ( $order->license_key ) : ?>
@@ -683,6 +794,18 @@ class STE_Checkout {
                                     ?>">
                                     <?php echo esc_html( $order->status ); ?>
                                 </span>
+                            </td>
+                            <td>
+                                <?php if ( $order_expires && 'completed' === $order->status ) :
+                                    $is_expired = current_time( 'timestamp' ) > strtotime( $order_expires );
+                                ?>
+                                    <span style="font-size:12px;<?php echo $is_expired ? 'color:#dc2626;' : 'color:#333;'; ?>">
+                                        <?php echo esc_html( date_i18n( 'M j, Y', strtotime( $order_expires ) ) ); ?>
+                                        <?php if ( $is_expired ) echo '<br><small style="color:#dc2626;">Expired</small>'; ?>
+                                    </span>
+                                <?php else : ?>
+                                    —
+                                <?php endif; ?>
                             </td>
                             <td><?php echo esc_html( date_i18n( 'M j, Y g:i a', strtotime( $order->created_at ) ) ); ?></td>
                         </tr>

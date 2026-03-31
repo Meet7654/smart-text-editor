@@ -259,6 +259,44 @@ img { max-width: 100%; height: auto; }
 .ste-pricing-features li svg { flex-shrink: 0; }
 .ste-pricing-disabled { color: #bbb !important; }
 .ste-pricing-btn { width: 100%; text-align: center; justify-content: center; }
+.ste-btn-trial {
+    background: linear-gradient(135deg, #059669, #10b981) !important;
+    color: #fff !important;
+    border: none !important;
+    font-size: 13px !important;
+}
+
+/* Billing toggle */
+.ste-pricing-toggle-wrap {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    margin: 0 0 32px;
+}
+.ste-pricing-toggle-label {
+    font-size: 15px; font-weight: 500; color: #999; cursor: pointer; transition: color .2s;
+}
+.ste-pricing-toggle-label.ste-toggle-active { color: #111; font-weight: 700; }
+.ste-pricing-toggle-switch {
+    position: relative; width: 48px; height: 26px; display: inline-block;
+}
+.ste-pricing-toggle-switch input { opacity: 0; width: 0; height: 0; }
+.ste-pricing-toggle-slider {
+    position: absolute; inset: 0; background: #d1d5db; border-radius: 26px;
+    cursor: pointer; transition: background .3s;
+}
+.ste-pricing-toggle-slider::before {
+    content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: transform .3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+.ste-pricing-toggle-switch input:checked + .ste-pricing-toggle-slider { background: #6366f1; }
+.ste-pricing-toggle-switch input:checked + .ste-pricing-toggle-slider::before { transform: translateX(22px); }
+.ste-pricing-save-tag {
+    font-size: 12px; font-weight: 700; color: #059669; background: #ecfdf5;
+    padding: 4px 12px; border-radius: 50px;
+}
+.ste-pricing-yearly-info {
+    font-size: 13px; color: #059669; font-weight: 600; margin: -4px 0 0;
+}
 
 /* ── CTA ── */
 .ste-cta {

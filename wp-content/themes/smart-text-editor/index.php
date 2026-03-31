@@ -607,6 +607,17 @@
             <p class="ste-section-sub">Choose the plan that fits your needs. Start free and upgrade anytime.</p>
         </div>
 
+        <!-- Billing Toggle -->
+        <div class="ste-pricing-toggle-wrap">
+            <span class="ste-pricing-toggle-label ste-toggle-active" data-cycle="monthly">Monthly</span>
+            <label class="ste-pricing-toggle-switch">
+                <input type="checkbox" id="ste-pricing-cycle-toggle">
+                <span class="ste-pricing-toggle-slider"></span>
+            </label>
+            <span class="ste-pricing-toggle-label" data-cycle="yearly">Yearly</span>
+            <span class="ste-pricing-save-tag">Save up to 17%</span>
+        </div>
+
         <div class="ste-pricing-grid">
             <!-- Free Plan -->
             <div class="ste-pricing-card">
@@ -614,7 +625,7 @@
                     <h3 class="ste-pricing-name">Free</h3>
                     <p class="ste-pricing-desc">Perfect for getting started</p>
                     <div class="ste-pricing-price">
-                        <span class="ste-pricing-amount">$0</span>
+                        <span class="ste-pricing-amount">₹0</span>
                         <span class="ste-pricing-period">/month</span>
                     </div>
                 </div>
@@ -653,6 +664,11 @@
                     </li>
                 </ul>
                 <a href="#editor" class="ste-btn ste-btn-outline ste-pricing-btn">Get Started Free</a>
+                <?php if ( is_user_logged_in() && current_user_can( 'manage_options' ) && class_exists( 'STE_License' ) && STE_License::can_start_trial() ) : ?>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=ste-license' ) ); ?>" class="ste-btn ste-btn-trial ste-pricing-btn" style="margin-top:8px;">
+                        Start 7-Day Pro Trial
+                    </a>
+                <?php endif; ?>
             </div>
 
             <!-- Pro Plan (Featured) -->
@@ -662,9 +678,12 @@
                     <h3 class="ste-pricing-name">Pro</h3>
                     <p class="ste-pricing-desc">For creators and professionals</p>
                     <div class="ste-pricing-price">
-                        <span class="ste-pricing-amount">$5</span>
-                        <span class="ste-pricing-period">/month</span>
+                        <span class="ste-pricing-amount ste-hp-price-monthly">₹449</span>
+                        <span class="ste-pricing-amount ste-hp-price-yearly" style="display:none;">₹4,490</span>
+                        <span class="ste-pricing-period ste-hp-period-monthly">/month</span>
+                        <span class="ste-pricing-period ste-hp-period-yearly" style="display:none;">/year</span>
                     </div>
+                    <div class="ste-pricing-yearly-info" style="display:none;">₹374/mo · Save ₹948/yr</div>
                 </div>
                 <ul class="ste-pricing-features">
                     <li>
@@ -700,7 +719,7 @@
                         Email support
                     </li>
                 </ul>
-                <a href="<?php echo esc_url( home_url( '/checkout/?plan=pro' ) ); ?>" class="ste-btn ste-btn-primary ste-pricing-btn">Get Started</a>
+                <a href="<?php echo esc_url( home_url( '/checkout/?plan=pro&billing=monthly' ) ); ?>" class="ste-btn ste-btn-primary ste-pricing-btn ste-hp-checkout-link" data-plan="pro">Get Started</a>
             </div>
 
             <!-- Business Plan -->
@@ -709,9 +728,12 @@
                     <h3 class="ste-pricing-name">Business</h3>
                     <p class="ste-pricing-desc">For teams and agencies</p>
                     <div class="ste-pricing-price">
-                        <span class="ste-pricing-amount">$15</span>
-                        <span class="ste-pricing-period">/month</span>
+                        <span class="ste-pricing-amount ste-hp-price-monthly">₹1,199</span>
+                        <span class="ste-pricing-amount ste-hp-price-yearly" style="display:none;">₹11,990</span>
+                        <span class="ste-pricing-period ste-hp-period-monthly">/month</span>
+                        <span class="ste-pricing-period ste-hp-period-yearly" style="display:none;">/year</span>
                     </div>
+                    <div class="ste-pricing-yearly-info" style="display:none;">₹999/mo · Save ₹2,398/yr</div>
                 </div>
                 <ul class="ste-pricing-features">
                     <li>
@@ -747,9 +769,29 @@
                         Early access to new features
                     </li>
                 </ul>
-                <a href="<?php echo esc_url( home_url( '/checkout/?plan=business' ) ); ?>" class="ste-btn ste-btn-outline ste-pricing-btn">Get Started</a>
+                <a href="<?php echo esc_url( home_url( '/checkout/?plan=business&billing=monthly' ) ); ?>" class="ste-btn ste-btn-outline ste-pricing-btn ste-hp-checkout-link" data-plan="business">Get Started</a>
             </div>
         </div>
+
+        <script>
+        (function(){
+            var toggle = document.getElementById('ste-pricing-cycle-toggle');
+            if (!toggle) return;
+            toggle.addEventListener('change', function(){
+                var yearly = this.checked;
+                document.querySelectorAll('.ste-hp-price-monthly, .ste-hp-period-monthly').forEach(function(el){ el.style.display = yearly ? 'none' : ''; });
+                document.querySelectorAll('.ste-hp-price-yearly, .ste-hp-period-yearly').forEach(function(el){ el.style.display = yearly ? '' : 'none'; });
+                document.querySelectorAll('.ste-pricing-yearly-info').forEach(function(el){ el.style.display = yearly ? 'block' : 'none'; });
+                document.querySelectorAll('.ste-hp-checkout-link').forEach(function(el){
+                    var plan = el.getAttribute('data-plan');
+                    el.href = '<?php echo esc_url( home_url( '/checkout/' ) ); ?>?plan=' + plan + '&billing=' + (yearly ? 'yearly' : 'monthly');
+                });
+                document.querySelectorAll('.ste-pricing-toggle-label').forEach(function(el){
+                    el.classList.toggle('ste-toggle-active', (yearly && el.dataset.cycle === 'yearly') || (!yearly && el.dataset.cycle === 'monthly'));
+                });
+            });
+        })();
+        </script>
     </div>
 </section>
 

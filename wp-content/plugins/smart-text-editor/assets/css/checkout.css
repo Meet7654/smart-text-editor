@@ -36,6 +36,33 @@
 .ste-checkout-form-wrap h1 { font-size: 24px; font-weight: 800; margin-bottom: 20px; }
 
 /* Plan switcher */
+/* Billing toggle */
+.ste-checkout-billing-toggle {
+    display: flex; gap: 0; margin-bottom: 16px; padding: 4px;
+    background: #f3f4f6; border-radius: 10px;
+}
+.ste-billing-opt {
+    flex: 1; padding: 10px 16px; text-align: center; font-size: 13px; font-weight: 600;
+    color: #666; border-radius: 8px; text-decoration: none; transition: all .2s;
+}
+.ste-billing-opt:hover { color: #333; }
+.ste-billing-opt.active {
+    background: #fff; color: #6366f1; box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.ste-billing-opt small {
+    font-size: 10px; font-weight: 700; color: #059669; background: #ecfdf5;
+    padding: 2px 6px; border-radius: 50px; margin-left: 4px;
+}
+
+/* Trial banner */
+.ste-checkout-trial-banner {
+    margin-top: 20px; padding: 14px 18px; background: #ecfdf5;
+    border: 1px solid #a7f3d0; border-radius: 10px; text-align: center;
+}
+.ste-checkout-trial-banner p { margin: 0; font-size: 13px; color: #065f46; }
+.ste-checkout-trial-banner a { color: #059669; text-decoration: none; }
+.ste-checkout-trial-banner a:hover { text-decoration: underline; }
+
 .ste-plan-switcher {
     display: flex; gap: 8px; margin-bottom: 28px; padding: 4px;
     background: #f3f4f6; border-radius: 10px;

@@ -7,8 +7,14 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 $plan_key = isset( $_GET['plan'] ) ? sanitize_text_field( wp_unslash( $_GET['plan'] ) ) : 'pro';
 if ( ! in_array( $plan_key, array( 'pro', 'business' ), true ) ) $plan_key = 'pro';
 
+$billing = isset( $_GET['billing'] ) ? sanitize_text_field( wp_unslash( $_GET['billing'] ) ) : 'monthly';
+if ( ! in_array( $billing, array( 'monthly', 'yearly' ), true ) ) $billing = 'monthly';
+$is_yearly = ( 'yearly' === $billing );
+
 $plans = STE_License::get_all_plans();
 $plan  = $plans[ $plan_key ];
+$plan_price = $is_yearly ? $plan['price_yearly_num'] : $plan['price_num'];
+$plan_period = $is_yearly ? 'year' : 'month';
 
 // Check if returning from Cashfree payment
 $return_order_id = isset( $_GET['order_id'] ) ? sanitize_text_field( wp_unslash( $_GET['order_id'] ) ) : '';
@@ -16,6 +22,15 @@ $return_result   = null;
 
 if ( $return_order_id ) {
     $return_result = STE_Checkout::handle_return( $return_order_id, $plan_key );
+    // Override sidebar values from actual order data
+    if ( $return_result && $return_result['success'] ) {
+        $plan_key = $return_result['plan'];
+        $plan     = $plans[ $plan_key ];
+        $actual_amount = floatval( str_replace( ',', '', $return_result['amount'] ) );
+        $plan_price    = $actual_amount;
+        $is_yearly     = ( $actual_amount > $plan['price_num'] );
+        $plan_period   = $is_yearly ? 'year' : 'month';
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -69,6 +84,9 @@ if ( $return_order_id ) {
 
                     <div class="ste-success-info">
                         <p>A confirmation email has been sent to <strong><?php echo esc_html( $return_result['email'] ); ?></strong>.</p>
+                        <?php if ( ! empty( $return_result['expires_at'] ) ) : ?>
+                            <p class="ste-success-expiry">License valid until: <strong><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $return_result['expires_at'] ) ) ); ?></strong></p>
+                        <?php endif; ?>
                     </div>
 
                     <div class="ste-success-steps">
@@ -107,15 +125,23 @@ if ( $return_order_id ) {
                 <div class="ste-checkout-form-wrap" id="ste-checkout-form-wrap">
                     <h1>Complete your purchase</h1>
 
+                    <!-- Billing toggle -->
+                    <div class="ste-checkout-billing-toggle">
+                        <a href="<?php echo esc_url( home_url( '/checkout/?plan=' . $plan_key . '&billing=monthly' ) ); ?>"
+                           class="ste-billing-opt <?php echo ! $is_yearly ? 'active' : ''; ?>">Monthly</a>
+                        <a href="<?php echo esc_url( home_url( '/checkout/?plan=' . $plan_key . '&billing=yearly' ) ); ?>"
+                           class="ste-billing-opt <?php echo $is_yearly ? 'active' : ''; ?>">Yearly <small>Save 17%</small></a>
+                    </div>
+
                     <!-- Plan switcher -->
                     <div class="ste-plan-switcher">
-                        <a href="<?php echo esc_url( home_url( '/checkout/?plan=pro' ) ); ?>"
+                        <a href="<?php echo esc_url( home_url( '/checkout/?plan=pro&billing=' . $billing ) ); ?>"
                            class="ste-plan-switch <?php echo 'pro' === $plan_key ? 'active' : ''; ?>">
-                            Pro — $5/mo
+                            Pro — <?php echo $is_yearly ? '₹4,490/yr' : '₹449/mo'; ?>
                         </a>
-                        <a href="<?php echo esc_url( home_url( '/checkout/?plan=business' ) ); ?>"
+                        <a href="<?php echo esc_url( home_url( '/checkout/?plan=business&billing=' . $billing ) ); ?>"
                            class="ste-plan-switch <?php echo 'business' === $plan_key ? 'active' : ''; ?>">
-                            Business — $15/mo
+                            Business — <?php echo $is_yearly ? '₹11,990/yr' : '₹1,199/mo'; ?>
                         </a>
                     </div>
 
@@ -123,10 +149,15 @@ if ( $return_order_id ) {
                         <div class="ste-checkout-error" style="display:block;">
                             Payment gateway is not configured yet. Please ask the site administrator to set up Cashfree credentials under <strong>Smart Editor &rarr; Payment Settings</strong>.
                         </div>
+                    <?php elseif ( ! STE_Checkout::is_smtp_configured() ) : ?>
+                        <div class="ste-checkout-error" style="display:block;">
+                            Email delivery is not configured. License keys cannot be sent to customers. Please ask the site administrator to configure <strong>FluentSMTP</strong> with a valid sender email before accepting purchases.
+                        </div>
                     <?php else : ?>
 
                     <form id="ste-checkout-form" autocomplete="on" novalidate>
                         <input type="hidden" name="plan" value="<?php echo esc_attr( $plan_key ); ?>">
+                        <input type="hidden" name="billing" value="<?php echo esc_attr( $billing ); ?>">
 
                         <div class="ste-form-section">
                             <h2>Your Details</h2>
@@ -151,7 +182,7 @@ if ( $return_order_id ) {
 
                         <!-- Submit -->
                         <button type="submit" id="ste-checkout-submit" class="ste-checkout-btn">
-                            <span class="ste-btn-text">Pay $<?php echo esc_html( $plan['price_num'] ); ?>.00</span>
+                            <span class="ste-btn-text">Pay ₹<?php echo esc_html( number_format( $plan_price ) ); ?></span>
                             <span class="ste-btn-loading" style="display:none;">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4m-7.07-3.93l2.83-2.83m8.48-8.48l2.83-2.83M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83"/></svg>
                                 Processing...
@@ -162,6 +193,12 @@ if ( $return_order_id ) {
                             You'll be redirected to Cashfree's secure payment page to complete your purchase. Supports UPI, Cards, Netbanking &amp; Wallets.
                         </p>
                     </form>
+
+                    <?php if ( is_user_logged_in() && current_user_can( 'manage_options' ) && STE_License::can_start_trial() ) : ?>
+                        <div class="ste-checkout-trial-banner">
+                            <p>Not ready to buy? <a href="<?php echo esc_url( admin_url( 'admin.php?page=ste-license' ) ); ?>"><strong>Start a 7-day free trial</strong></a> — no payment required.</p>
+                        </div>
+                    <?php endif; ?>
 
                     <?php endif; ?>
                 </div>
@@ -181,7 +218,7 @@ if ( $return_order_id ) {
                 </div>
                 <div>
                     <strong>Smart Text Editor — <?php echo esc_html( $plan['label'] ); ?></strong>
-                    <span>Monthly subscription</span>
+                    <span><?php echo $is_yearly ? 'Yearly' : 'Monthly'; ?> subscription</span>
                 </div>
             </div>
 
@@ -207,11 +244,17 @@ if ( $return_order_id ) {
 
             <div class="ste-summary-line">
                 <span>Subtotal</span>
-                <span>$<?php echo esc_html( $plan['price_num'] ); ?>.00</span>
+                <span>₹<?php echo esc_html( number_format( $plan_price ) ); ?></span>
             </div>
+            <?php if ( $is_yearly ) : ?>
+            <div class="ste-summary-line" style="color:#059669;font-size:13px;">
+                <span>You save</span>
+                <span>₹<?php echo esc_html( number_format( ( $plan['price_num'] * 12 ) - $plan['price_yearly_num'] ) ); ?>/yr</span>
+            </div>
+            <?php endif; ?>
             <div class="ste-summary-line ste-summary-total">
                 <span>Total due today</span>
-                <span>$<?php echo esc_html( $plan['price_num'] ); ?>.00 <small>USD</small></span>
+                <span>₹<?php echo esc_html( number_format( $plan_price ) ); ?> <small>INR</small></span>
             </div>
 
             <div class="ste-summary-guarantee">

@@ -21,20 +21,83 @@ define( 'STE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'STE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'STE_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 
-require_once STE_PLUGIN_DIR . 'includes/class-ste-license.php';
-require_once STE_PLUGIN_DIR . 'includes/class-ste-admin.php';
-require_once STE_PLUGIN_DIR . 'includes/class-ste-editor.php';
-require_once STE_PLUGIN_DIR . 'includes/class-ste-ajax.php';
-require_once STE_PLUGIN_DIR . 'includes/class-ste-shortcode.php';
-require_once STE_PLUGIN_DIR . 'includes/class-ste-checkout.php';
+/* ── Required dependency: FluentSMTP ── */
+function ste_check_fluentsmtp() {
+    if ( ! function_exists( 'is_plugin_active' ) ) {
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+    }
+    return is_plugin_active( 'fluent-smtp/fluent-smtp.php' );
+}
 
+function ste_fluentsmtp_notice() {
+    if ( ste_check_fluentsmtp() ) return;
+
+    $install_url  = '';
+    $action_label = '';
+
+    if ( file_exists( WP_PLUGIN_DIR . '/fluent-smtp/fluent-smtp.php' ) ) {
+        // Installed but not activated
+        $activate_url = wp_nonce_url(
+            admin_url( 'plugins.php?action=activate&plugin=fluent-smtp/fluent-smtp.php' ),
+            'activate-plugin_fluent-smtp/fluent-smtp.php'
+        );
+        $action_label = '<a href="' . esc_url( $activate_url ) . '" class="button button-primary" style="margin-left:12px;vertical-align:middle;">Activate FluentSMTP</a>';
+    } else {
+        // Not installed
+        $install_url = wp_nonce_url(
+            admin_url( 'update.php?action=install-plugin&plugin=fluent-smtp' ),
+            'install-plugin_fluent-smtp'
+        );
+        $action_label = '<a href="' . esc_url( $install_url ) . '" class="button button-primary" style="margin-left:12px;vertical-align:middle;">Install FluentSMTP</a>';
+    }
+
+    echo '<div class="notice notice-error" style="padding:14px 18px;border-left-color:#dc2626;">
+        <p style="font-size:14px;margin:0;">
+            <strong>Smart Text Editor</strong> requires the <strong>FluentSMTP</strong> plugin to send emails (license keys, order confirmations, etc.). Please install and activate it to use Smart Text Editor.
+            ' . $action_label . '
+        </p>
+    </div>';
+}
+add_action( 'admin_notices', 'ste_fluentsmtp_notice' );
+
+/* ── SMTP configuration notice ── */
+function ste_smtp_config_notice() {
+    if ( ! ste_check_fluentsmtp() ) return; // FluentSMTP notice already shown
+    if ( ! class_exists( 'STE_Checkout' ) ) return;
+    if ( STE_Checkout::is_smtp_configured() ) return;
+
+    echo '<div class="notice notice-warning" style="padding:12px 18px;border-left-color:#f59e0b;">
+        <p style="font-size:13px;margin:0;">
+            <strong>Smart Text Editor:</strong> FluentSMTP is active but no sender email is configured. Purchases are blocked until email delivery is set up.
+            <a href="' . esc_url( admin_url( 'options-general.php?page=fluent-mail#/' ) ) . '" style="margin-left:6px;">Configure FluentSMTP &rarr;</a>
+        </p>
+    </div>';
+}
+add_action( 'admin_notices', 'ste_smtp_config_notice' );
+
+/* ── Stop loading if FluentSMTP is not active ── */
 function ste_init() {
+    if ( ! ste_check_fluentsmtp() ) return;
+
+    require_once STE_PLUGIN_DIR . 'includes/class-ste-license.php';
+    require_once STE_PLUGIN_DIR . 'includes/class-ste-admin.php';
+    require_once STE_PLUGIN_DIR . 'includes/class-ste-editor.php';
+    require_once STE_PLUGIN_DIR . 'includes/class-ste-ajax.php';
+    require_once STE_PLUGIN_DIR . 'includes/class-ste-shortcode.php';
+    require_once STE_PLUGIN_DIR . 'includes/class-ste-checkout.php';
+
     STE_License::init();
     STE_Admin::init();
     STE_Editor::init();
     STE_Ajax::init();
     STE_Shortcode::init();
     STE_Checkout::init();
+
+    // Run DB migration if needed (adds expires_at column)
+    if ( get_option( 'ste_db_version', '0' ) !== STE_VERSION ) {
+        STE_Checkout::create_table();
+        update_option( 'ste_db_version', STE_VERSION );
+    }
 }
 add_action( 'plugins_loaded', 'ste_init' );
 

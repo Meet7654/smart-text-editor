@@ -1215,13 +1215,14 @@
     /* ━━━ Plan Gating ━━━ */
     function initPlanGating() {
         var cfg = window.stePlan;
-        if (!cfg || cfg.plan === 'business') return; // Business has everything
+        if (!cfg || (cfg.plan === 'business' && !cfg.isTrial)) return; // Business (non-trial) has everything
 
         var featureLabels = {
             effects:      'Style Effects (Gradient, 3D, Glow, Shadow)',
             animations:   'Scroll Animations',
             tableEditor:  'Table Editor',
             exportCss:    'HTML/CSS Export',
+            sourceView:   'HTML Source Code',
             customPresets: 'Custom Presets'
         };
 
@@ -1231,8 +1232,12 @@
             var msg   = document.getElementById('ste-upgrade-msg');
             if (!modal) return;
             var label = featureLabels[featureKey] || featureKey;
-            var minPlan = (featureKey === 'customPresets') ? 'Business' : 'Pro';
-            msg.innerHTML = '<strong>' + escHtml(label) + '</strong> is available on the <strong>' + minPlan + '</strong> plan and above.';
+            if (cfg.isTrial) {
+                msg.innerHTML = '<strong>' + escHtml(label) + '</strong> is not available during the free trial. Purchase a <strong>Pro</strong> or <strong>Business</strong> plan to unlock this feature.';
+            } else {
+                var minPlan = (featureKey === 'customPresets') ? 'Business' : 'Pro';
+                msg.innerHTML = '<strong>' + escHtml(label) + '</strong> is available on the <strong>' + minPlan + '</strong> plan and above.';
+            }
             modal.classList.remove('ste-hidden');
         }
 

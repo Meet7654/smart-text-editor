@@ -273,7 +273,7 @@ class STE_Editor {
 
                 <button type="button" id="ste-btn-copy-style" title="Copy Style" class="ste-tb">🎨</button>
                 <button type="button" id="ste-btn-paste-style" title="Paste Style" class="ste-tb">📋</button>
-                <button type="button" id="ste-btn-source" title="HTML Source" class="ste-tb ste-tb-txt">&lt;/&gt;</button>
+                <button type="button" id="ste-btn-source" title="HTML Source" class="ste-tb ste-tb-txt" data-ste-feature="sourceView">&lt;/&gt;</button>
                 <button type="button" id="ste-btn-export" title="Export HTML/CSS" class="ste-tb ste-tb-txt" data-ste-feature="exportCss">Export</button>
                 <div class="ste-sep"></div>
 
