@@ -8,20 +8,20 @@
         <div class="ste-hero-orb ste-hero-orb-3"></div>
     </div>
     <div class="ste-container ste-hero-content">
-        <div class="ste-hero-badge">Next-Generation Text Editor</div>
-        <h1 class="ste-hero-title">
+        <div class="ste-hero-badge" data-ste-anim="fade" data-ste-anim-dur="0.5">Next-Generation Text Editor</div>
+        <h1 class="ste-hero-title" data-ste-anim="slide-up" data-ste-anim-dur="0.7">
             Write with <span class="ste-gradient-hero">Style</span>,<br>
             Design with <span class="ste-gradient-hero-2">Power</span>
         </h1>
-        <p class="ste-hero-sub">A fully custom rich text editor with 50+ fonts, gradient text, 3D effects, glow animations, and instant style presets. No bloat. Pure craftsmanship.</p>
-        <div class="ste-hero-actions">
+        <p class="ste-hero-sub" data-ste-anim="fade" data-ste-anim-dur="0.8">A fully custom rich text editor with 50+ fonts, gradient text, 3D effects, glow animations, and instant style presets. No bloat. Pure craftsmanship.</p>
+        <div class="ste-hero-actions" data-ste-anim="slide-up" data-ste-anim-dur="0.6">
             <a href="#editor" class="ste-btn ste-btn-primary">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                 Start Writing
             </a>
             <a href="#features" class="ste-btn ste-btn-outline">Explore Features</a>
         </div>
-        <div class="ste-hero-stats">
+        <div class="ste-hero-stats" data-ste-anim="fade" data-ste-anim-dur="0.9">
             <div class="ste-stat"><span class="ste-stat-num">50+</span><span class="ste-stat-label">Google Fonts</span></div>
             <div class="ste-stat"><span class="ste-stat-num">36</span><span class="ste-stat-label">Style Presets</span></div>
             <div class="ste-stat"><span class="ste-stat-num">11</span><span class="ste-stat-label">Animations</span></div>
@@ -76,11 +76,11 @@
     <div class="ste-container">
         <div class="ste-section-header">
             <span class="ste-section-badge">How It Works</span>
-            <h2 class="ste-section-title">Create Stunning Content in 3 Steps</h2>
-            <p class="ste-section-sub">No learning curve. Just open, style, and publish.</p>
+            <h2 class="ste-section-title" data-ste-anim="slide-up" data-ste-anim-dur="0.6">Create Stunning Content in 3 Steps</h2>
+            <p class="ste-section-sub" data-ste-anim="fade" data-ste-anim-dur="0.7">No learning curve. Just open, style, and publish.</p>
         </div>
         <div class="ste-steps">
-            <div class="ste-step">
+            <div class="ste-step" data-ste-anim="zoom-in" data-ste-anim-dur="0.5">
                 <div class="ste-step-num">1</div>
                 <div class="ste-step-icon">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
@@ -88,10 +88,10 @@
                 <h3>Write Your Content</h3>
                 <p>Open any post or page. The Smart Text Editor replaces the default editor with a powerful formatting toolbar.</p>
             </div>
-            <div class="ste-step-connector">
+            <div class="ste-step-connector" data-ste-anim="fade" data-ste-anim-dur="0.4">
                 <svg width="60" height="24" viewBox="0 0 60 24" fill="none"><path d="M0 12h52m0 0l-8-8m8 8l-8 8" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/></svg>
             </div>
-            <div class="ste-step">
+            <div class="ste-step" data-ste-anim="zoom-in" data-ste-anim-dur="0.6">
                 <div class="ste-step-num">2</div>
                 <div class="ste-step-icon">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="1.5" stroke-linecap="round"><circle cx="13.5" cy="6.5" r="2.5"/><path d="M17.5 11.5a2.5 2.5 0 0 0-5 0"/><circle cx="8.5" cy="11.5" r="2.5"/><path d="M12.5 16.5a2.5 2.5 0 0 0-5 0"/><rect x="2" y="2" width="20" height="20" rx="4"/></svg>
@@ -99,10 +99,10 @@
                 <h3>Apply Effects &amp; Styles</h3>
                 <p>Select text and add gradients, glow, 3D shadows, fonts, colors, and animations with one click.</p>
             </div>
-            <div class="ste-step-connector">
+            <div class="ste-step-connector" data-ste-anim="fade" data-ste-anim-dur="0.4">
                 <svg width="60" height="24" viewBox="0 0 60 24" fill="none"><path d="M0 12h52m0 0l-8-8m8 8l-8 8" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/></svg>
             </div>
-            <div class="ste-step">
+            <div class="ste-step" data-ste-anim="zoom-in" data-ste-anim-dur="0.7">
                 <div class="ste-step-num">3</div>
                 <div class="ste-step-icon">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="1.5" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -119,60 +119,60 @@
     <div class="ste-container">
         <div class="ste-section-header">
             <span class="ste-section-badge">Features</span>
-            <h2 class="ste-section-title">Everything You Need to Create</h2>
-            <p class="ste-section-sub">A complete text editing experience built from scratch with powerful style effects.</p>
+            <h2 class="ste-section-title" data-ste-anim="slide-up" data-ste-anim-dur="0.6">Everything You Need to Create</h2>
+            <p class="ste-section-sub" data-ste-anim="fade" data-ste-anim-dur="0.7">A complete text editing experience built from scratch with powerful style effects.</p>
         </div>
         <div class="ste-features-grid">
-            <div class="ste-feature-card">
+            <div class="ste-feature-card" data-ste-anim="slide-up" data-ste-anim-dur="0.4">
                 <div class="ste-feature-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
                 </div>
                 <h3>Rich Text Formatting</h3>
                 <p>Bold, italic, underline, strikethrough, subscript, superscript, headings, lists, blockquotes, and more.</p>
             </div>
-            <div class="ste-feature-card">
+            <div class="ste-feature-card" data-ste-anim="slide-up" data-ste-anim-dur="0.5">
                 <div class="ste-feature-icon" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
                 </div>
                 <h3>50+ Google Fonts</h3>
                 <p>From elegant serifs to playful scripts, monospace to display fonts. Instantly preview and apply any font.</p>
             </div>
-            <div class="ste-feature-card">
+            <div class="ste-feature-card" data-ste-anim="slide-up" data-ste-anim-dur="0.6">
                 <div class="ste-feature-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                 </div>
                 <h3>Gradient Text</h3>
                 <p>Apply stunning multi-color gradients to any text. Choose colors, adjust angles, create eye-catching headers.</p>
             </div>
-            <div class="ste-feature-card">
+            <div class="ste-feature-card" data-ste-anim="slide-up" data-ste-anim-dur="0.4">
                 <div class="ste-feature-icon" style="background: linear-gradient(135deg, #14b8a6, #06b6d4);">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
                 </div>
                 <h3>3D Text Effects</h3>
                 <p>Add depth with customizable 3D text shadows. Control depth, direction, and shadow color for any selection.</p>
             </div>
-            <div class="ste-feature-card">
+            <div class="ste-feature-card" data-ste-anim="slide-up" data-ste-anim-dur="0.5">
                 <div class="ste-feature-icon" style="background: linear-gradient(135deg, #8b5cf6, #6366f1);">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 3v1m0 16v1m-8-9H3m18 0h-1m-2.636-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707"/><circle cx="12" cy="12" r="4"/></svg>
                 </div>
                 <h3>Glow Effects</h3>
                 <p>Make text glow with neon-style effects. Perfect for headings, highlights, and creating visual emphasis.</p>
             </div>
-            <div class="ste-feature-card">
+            <div class="ste-feature-card" data-ste-anim="slide-up" data-ste-anim-dur="0.6">
                 <div class="ste-feature-icon" style="background: linear-gradient(135deg, #0ea5e9, #3b82f6);">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 </div>
                 <h3>11 Scroll Animations</h3>
                 <p>Fade, slide, bounce, zoom, flip, typewriter, and more. Elements animate on scroll for engaging pages.</p>
             </div>
-            <div class="ste-feature-card">
+            <div class="ste-feature-card" data-ste-anim="slide-up" data-ste-anim-dur="0.4">
                 <div class="ste-feature-icon" style="background: linear-gradient(135deg, #10b981, #22c55e);">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                 </div>
                 <h3>Table Editor</h3>
                 <p>Visual table picker, custom borders, cell padding, header rows, merge/split cells, and cell background colors.</p>
             </div>
-            <div class="ste-feature-card">
+            <div class="ste-feature-card" data-ste-anim="slide-up" data-ste-anim-dur="0.5">
                 <div class="ste-feature-icon" style="background: linear-gradient(135deg, #f97316, #eab308);">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
                 </div>
@@ -188,11 +188,11 @@
     <div class="ste-container">
         <div class="ste-section-header">
             <span class="ste-section-badge">Live Editor</span>
-            <h2 class="ste-section-title">Try It Right Now</h2>
+            <h2 class="ste-section-title" data-ste-anim="slide-up" data-ste-anim-dur="0.6">Try It Right Now</h2>
             <p class="ste-section-sub">A fully functional editor right in your browser. Select text and apply fonts, colors, and effects.</p>
         </div>
 
-        <div class="ste-live-editor-wrap">
+        <div class="ste-live-editor-wrap" data-ste-anim="zoom-in" data-ste-anim-dur="0.7">
             <!-- Toolbar -->
             <div class="ste-live-toolbar" id="ste-live-toolbar">
                 <select id="ste-live-font" title="Font Family">
@@ -382,7 +382,7 @@
     <div class="ste-container">
         <div class="ste-section-header">
             <span class="ste-section-badge">Typography</span>
-            <h2 class="ste-section-title">50+ Beautiful Fonts</h2>
+            <h2 class="ste-section-title" data-ste-anim="slide-up" data-ste-anim-dur="0.6">50+ Beautiful Fonts</h2>
             <p class="ste-section-sub">Every font is available in the editor above. Click any font card to preview it live.</p>
         </div>
 
@@ -624,13 +624,13 @@
     <div class="ste-container">
         <div class="ste-section-header">
             <span class="ste-section-badge">Style Effects</span>
-            <h2 class="ste-section-title">Powerful Visual Effects</h2>
+            <h2 class="ste-section-title" data-ste-anim="slide-up" data-ste-anim-dur="0.6">Powerful Visual Effects</h2>
             <p class="ste-section-sub">Apply these effects to any text in the editor. Mix and match for unique designs.</p>
         </div>
 
         <div class="ste-styles-grid">
             <!-- Gradients -->
-            <div class="ste-style-card ste-style-wide">
+            <div class="ste-style-card ste-style-wide" data-ste-anim="fade" data-ste-anim-dur="0.5">
                 <h3>Gradient Text</h3>
                 <div class="ste-style-demos">
                     <span class="ste-demo-text" style="font-size:36px;font-weight:800;font-family:'Poppins',sans-serif;background:linear-gradient(90deg,#ff6b6b,#48dbfb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Sunset Glow</span>
@@ -641,7 +641,7 @@
             </div>
 
             <!-- 3D Text -->
-            <div class="ste-style-card">
+            <div class="ste-style-card" data-ste-anim="slide-left" data-ste-anim-dur="0.5">
                 <h3>3D Text</h3>
                 <div class="ste-style-demos">
                     <span class="ste-demo-text" style="font-size:42px;font-weight:900;font-family:'Anton',sans-serif;color:#4f46e5;text-shadow:1px 1px 0 #3730a3,2px 2px 0 #312e81,3px 3px 0 #1e1b4b,4px 4px 0 #1e1b4b,5px 5px 10px rgba(0,0,0,.2);">DEPTH</span>
@@ -650,8 +650,8 @@
             </div>
 
             <!-- Glow -->
-            <div class="ste-style-card ste-style-glow-bg">
-                <h3 style="color:#fff;">Glow Effects</h3>
+            <div class="ste-style-card" data-ste-anim="slide-right" data-ste-anim-dur="0.5">
+                <h3>Glow Effects</h3>
                 <div class="ste-style-demos">
                     <span class="ste-demo-text" style="font-size:36px;font-weight:700;font-family:'Orbitron',sans-serif;color:#00ffff;text-shadow:0 0 10px #00ffff,0 0 20px #00ffff,0 0 40px #00ffff;">NEON</span>
                     <span class="ste-demo-text" style="font-size:36px;font-weight:700;font-family:'Righteous',sans-serif;color:#ff00ff;text-shadow:0 0 10px #ff00ff,0 0 20px #ff00ff,0 0 40px #ff00ff;">CYBER</span>
@@ -660,7 +660,7 @@
             </div>
 
             <!-- Shadows -->
-            <div class="ste-style-card">
+            <div class="ste-style-card" data-ste-anim="slide-left" data-ste-anim-dur="0.5">
                 <h3>Text Shadows</h3>
                 <div class="ste-style-demos">
                     <span class="ste-demo-text" style="font-size:36px;font-weight:700;font-family:'Playfair Display',serif;text-shadow:3px 3px 6px rgba(0,0,0,.3);">Soft Shadow</span>
@@ -669,8 +669,20 @@
                 </div>
             </div>
 
+            <!-- Font Styles -->
+            <div class="ste-style-card" data-ste-anim="slide-right" data-ste-anim-dur="0.5">
+                <h3>Font Styles</h3>
+                <div class="ste-style-demos">
+                    <span class="ste-demo-text" style="font-size:36px;font-weight:700;font-family:'Playfair Display',serif;font-style:italic;color:#f0abfc;letter-spacing:2px;">Elegant Serif</span>
+                    <span class="ste-demo-text" style="font-size:36px;font-weight:700;font-family:'Courier New',monospace;color:#67e8f9;letter-spacing:1px;">Typewriter</span>
+
+                    <span class="ste-demo-text" style="font-size:36px;font-weight:600;font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:#fbbf24;">Small Caps</span>
+                    <span class="ste-demo-text" style="font-size:36px;font-weight:700;font-family:cursive;color:#fb923c;">Handwritten</span>
+                </div>
+            </div>
+
             <!-- Mixed Effects -->
-            <div class="ste-style-card ste-style-wide">
+            <div class="ste-style-card ste-style-wide" data-ste-anim="bounce" data-ste-anim-dur="0.8">
                 <h3>Combined Effects</h3>
                 <div class="ste-style-demos">
                     <span class="ste-demo-text" style="font-size:48px;font-weight:900;font-family:'Bangers',cursive;background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:none;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.15));">COMIC STYLE</span>
@@ -687,7 +699,7 @@
     <div class="ste-container">
         <div class="ste-section-header">
             <span class="ste-section-badge">Pricing</span>
-            <h2 class="ste-section-title">Simple, Transparent Pricing</h2>
+            <h2 class="ste-section-title" data-ste-anim="slide-up" data-ste-anim-dur="0.6">Simple, Transparent Pricing</h2>
             <p class="ste-section-sub">Choose the plan that fits your needs. Start free and upgrade anytime.</p>
         </div>
 
@@ -884,11 +896,11 @@
     <div class="ste-container">
         <div class="ste-section-header">
             <span class="ste-section-badge">The Difference</span>
-            <h2 class="ste-section-title">Plain Text vs Smart Text Editor</h2>
+            <h2 class="ste-section-title" data-ste-anim="slide-up" data-ste-anim-dur="0.6">Plain Text vs Smart Text Editor</h2>
             <p class="ste-section-sub">See the dramatic difference our effects and styling tools make.</p>
         </div>
         <div class="ste-compare-grid">
-            <div class="ste-compare-card ste-compare-before">
+            <div class="ste-compare-card ste-compare-before" data-ste-anim="slide-right" data-ste-anim-dur="0.6">
                 <div class="ste-compare-label">Before</div>
                 <div class="ste-compare-content">
                     <h2 style="font-family:Arial,sans-serif;font-size:24px;color:#333;margin-bottom:12px;">Welcome to Our Website</h2>
@@ -896,10 +908,10 @@
                     <p style="font-family:Arial,sans-serif;font-size:14px;color:#999;margin-top:12px;">-- Plain boring text, no visual impact --</p>
                 </div>
             </div>
-            <div class="ste-compare-vs">
+            <div class="ste-compare-vs" data-ste-anim="zoom-in" data-ste-anim-dur="0.5">
                 <span>VS</span>
             </div>
-            <div class="ste-compare-card ste-compare-after">
+            <div class="ste-compare-card ste-compare-after" data-ste-anim="slide-left" data-ste-anim-dur="0.6">
                 <div class="ste-compare-label">After</div>
                 <div class="ste-compare-content">
                     <h2 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;margin-bottom:12px;"><span style="background:linear-gradient(135deg,#6366f1,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Welcome to Our Website</span></h2>
@@ -916,11 +928,11 @@
     <div class="ste-container">
         <div class="ste-section-header">
             <span class="ste-section-badge">Loved by Creators</span>
-            <h2 class="ste-section-title">What People Are Saying</h2>
+            <h2 class="ste-section-title" data-ste-anim="slide-up" data-ste-anim-dur="0.6">What People Are Saying</h2>
             <p class="ste-section-sub">Trusted by WordPress creators, designers, and content writers.</p>
         </div>
         <div class="ste-testimonials-grid">
-            <div class="ste-testimonial-card">
+            <div class="ste-testimonial-card" data-ste-anim="flip" data-ste-anim-dur="0.6">
                 <div class="ste-testimonial-stars">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -937,7 +949,7 @@
                     </div>
                 </div>
             </div>
-            <div class="ste-testimonial-card ste-testimonial-featured">
+            <div class="ste-testimonial-card ste-testimonial-featured" data-ste-anim="flip" data-ste-anim-dur="0.7">
                 <div class="ste-testimonial-stars">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -954,7 +966,7 @@
                     </div>
                 </div>
             </div>
-            <div class="ste-testimonial-card">
+            <div class="ste-testimonial-card" data-ste-anim="flip" data-ste-anim-dur="0.8">
                 <div class="ste-testimonial-stars">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -1015,10 +1027,10 @@
     </div>
     <div class="ste-container" style="position:relative;">
         <div class="ste-cta-v2-content">
-            <span class="ste-section-badge" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2);color:#fff;">Get Started Today</span>
-            <h2>Ready to Create Something <span style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Beautiful</span>?</h2>
-            <p>Join thousands of WordPress creators who are designing stunning content with zero code.</p>
-            <div class="ste-cta-v2-actions">
+            <span class="ste-section-badge" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2);color:#fff;" data-ste-anim="fade" data-ste-anim-dur="0.5">Get Started Today</span>
+            <h2 data-ste-anim="bounce" data-ste-anim-dur="0.8">Ready to Create Something <span style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Beautiful</span>?</h2>
+            <p data-ste-anim="fade" data-ste-anim-dur="0.7">Join thousands of WordPress creators who are designing stunning content with zero code.</p>
+            <div class="ste-cta-v2-actions" data-ste-anim="slide-up" data-ste-anim-dur="0.6">
                 <a href="#editor" class="ste-btn ste-btn-primary ste-btn-lg" style="background:#fff;color:#6366f1;box-shadow:0 4px 24px rgba(0,0,0,.2);">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                     Open the Editor
@@ -1033,4 +1045,29 @@
     </div>
 </section>
 
+<script>
+/* Fallback animation observer if plugin frontend.js is not loaded */
+(function(){
+    if (window._steAnimInit) return;
+    window._steAnimInit = true;
+    var els = document.querySelectorAll('[data-ste-anim]');
+    if (!els.length) return;
+    if (!('IntersectionObserver' in window)) {
+        els.forEach(function(el){ el.style.opacity = '1'; });
+        return;
+    }
+    var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+            if (e.isIntersecting) {
+                var t = e.target, type = t.getAttribute('data-ste-anim'),
+                    dur = parseFloat(t.getAttribute('data-ste-anim-dur')) || 0.6;
+                t.style.animation = 'ste-' + type + ' ' + dur + 's ease both';
+                t.addEventListener('animationend', function() { t.style.opacity = '1'; }, {once: true});
+                io.unobserve(t);
+            }
+        });
+    }, {threshold: 0.15});
+    els.forEach(function(el){ io.observe(el); });
+})();
+</script>
 <?php get_footer(); ?>

@@ -226,6 +226,26 @@ img { max-width: 100%; height: auto; }
 .ste-demo-text { display: inline-block; line-height: 1.2; }
 .ste-style-glow-bg { background: #0a0a12; }
 
+/* ── Text Shadows ── */
+.ste-shadow-soft { text-shadow: 3px 3px 6px rgba(0,0,0,.3); }
+.ste-shadow-hard { text-shadow: 4px 4px 0 #e5e7eb; }
+.ste-shadow-retro { text-shadow: 2px 2px 0 #c4b5fd, -1px -1px 0 #ddd6fe; }
+.ste-shadow-3d-blue { text-shadow: 1px 1px 0 #3730a3, 2px 2px 0 #312e81, 3px 3px 0 #1e1b4b, 4px 4px 0 #1e1b4b, 5px 5px 10px rgba(0,0,0,.2); }
+.ste-shadow-3d-red { text-shadow: 1px 1px 0 #dc2626, 2px 2px 0 #b91c1c, 3px 3px 0 #991b1b, 4px 4px 0 #7f1d1d, 5px 5px 10px rgba(0,0,0,.2); }
+.ste-shadow-neon-cyan { text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 40px #00ffff; }
+.ste-shadow-neon-magenta { text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 40px #ff00ff; }
+.ste-shadow-neon-green { text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14, 0 0 40px #39ff14; }
+.ste-shadow-long { text-shadow: 1px 1px 0 #c0392b, 2px 2px 0 #c0392b, 3px 3px 0 #c0392b, 4px 4px 0 #c0392b, 5px 5px 0 #c0392b, 6px 6px 0 #c0392b, 7px 7px 0 #c0392b, 8px 8px 0 #c0392b; }
+.ste-shadow-emboss { text-shadow: -1px -1px 0 #fff, 1px 1px 0 #333; }
+.ste-shadow-letterpress { text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+.ste-shadow-retro-pop { text-shadow: 3px 3px 0 #ffc857, 6px 6px 0 #2ec4b6; }
+.ste-shadow-comic { text-shadow: 2px 2px 0 #e67e22, 4px 4px 0 #d35400, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
+.ste-shadow-marker { text-shadow: 2px 2px 0 #fbbf24; }
+.ste-shadow-elegant { text-shadow: 0 0 20px rgba(99,102,241,.4); }
+.ste-shadow-fire { text-shadow: 0 0 5px #ff6600, 0 0 12px #ff3300, 0 0 24px #ff0000; }
+.ste-shadow-frosted { text-shadow: 0 0 10px rgba(168,216,234,.8), 0 0 20px rgba(168,216,234,.4); }
+.ste-shadow-deep { text-shadow: 2px 2px 0 #16213e, 4px 4px 0 #0f3460, 6px 6px 0 #533483; }
+
 /* ── Pricing ── */
 .ste-pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: start; }
 .ste-pricing-card {
@@ -460,6 +480,56 @@ img { max-width: 100%; height: auto; }
 .ste-footer-col a:hover { color: #fff; }
 .ste-footer-bottom { padding: 24px 0; text-align: center; }
 .ste-footer-bottom p { font-size: 13px; color: #555; }
+
+/* ── Scroll Animations (same as editor) ── */
+/* The plugin's frontend.css sets [data-ste-anim]{display:inline-block} which
+   is correct for styled spans inside .ste-output post content, but collapses
+   flex/grid/block layout elements on the homepage. We force block/flex back
+   on specific theme elements while keeping opacity:0 for pre-animation state. */
+[data-ste-anim] { opacity: 0; transition: none; }
+[data-ste-anim].ste-anim-no-observer { opacity: 1; }
+
+/* Block elements — headings, paragraphs, wrappers */
+h1[data-ste-anim],
+h2[data-ste-anim] { display: block !important; }
+
+/* Flex containers */
+.ste-hero-actions[data-ste-anim],
+.ste-hero-stats[data-ste-anim],
+.ste-compare-vs[data-ste-anim],
+.ste-cta-v2-actions[data-ste-anim] { display: flex !important; }
+
+/* Inline-block elements (badges, etc.) */
+span.ste-section-badge[data-ste-anim],
+div.ste-hero-badge[data-ste-anim] { display: inline-block !important; }
+
+/* Grid children — feature cards, style cards, testimonial cards, etc. */
+.ste-feature-card[data-ste-anim],
+.ste-style-card[data-ste-anim],
+.ste-testimonial-card[data-ste-anim],
+.ste-compare-card[data-ste-anim],
+.ste-step[data-ste-anim] { display: block !important; }
+
+/* The live editor wrapper */
+.ste-live-editor-wrap[data-ste-anim] { display: block !important; }
+
+/* Step connectors stay flex-shrink inline in the steps row */
+.ste-step-connector[data-ste-anim] { display: block !important; flex-shrink: 0; }
+
+/* Don't override display inside .ste-output (post content — plugin handles it) */
+.ste-output [data-ste-anim] { display: inline-block !important; }
+@keyframes ste-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ste-slide-up { from { opacity: 0; transform: translateY(80px); } 20% { opacity: 1; } to { opacity: 1; transform: translateY(0); } }
+@keyframes ste-slide-down { from { opacity: 0; transform: translateY(-80px); } 20% { opacity: 1; } to { opacity: 1; transform: translateY(0); } }
+@keyframes ste-slide-left { from { opacity: 0; transform: translateX(100px); } 20% { opacity: 1; } to { opacity: 1; transform: translateX(0); } }
+@keyframes ste-slide-right { from { opacity: 0; transform: translateX(-100px); } 20% { opacity: 1; } to { opacity: 1; transform: translateX(0); } }
+@keyframes ste-reveal { from { opacity: 1; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+@keyframes ste-bounce { 0% { opacity: 0; transform: translateY(80px); } 40% { opacity: 1; transform: translateY(-20px); } 65% { transform: translateY(10px); } 85% { transform: translateY(-5px); } 100% { transform: translateY(0); } }
+@keyframes ste-zoom-in { from { opacity: 0; transform: scale(0.3); } to { opacity: 1; transform: scale(1); } }
+@keyframes ste-zoom-out { from { opacity: 0; transform: scale(1.8); } to { opacity: 1; transform: scale(1); } }
+@keyframes ste-flip { from { opacity: 0; transform: perspective(400px) rotateY(90deg); } 40% { opacity: 1; transform: perspective(400px) rotateY(-15deg); } 70% { transform: perspective(400px) rotateY(10deg); } to { transform: perspective(400px) rotateY(0); } }
+@keyframes ste-typewriter { from { max-width: 0; opacity: 1; } to { max-width: 100%; opacity: 1; } }
+[data-ste-anim="typewriter"] { overflow: hidden; white-space: nowrap; display: inline-block; }
 
 /* ── Toast notification ── */
 .ste-toast-notify {

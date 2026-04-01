@@ -35,8 +35,11 @@
         if ( ! type ) return;
 
         /* The animation keyframes handle opacity (0 → 1) and transforms.
-           fill-mode 'both' keeps the final state after animation ends. */
+           fill-mode 'both' keeps the final state after animation ends.
+           We also explicitly set opacity:1 on animationend to prevent
+           the CSS rule [data-ste-anim]{opacity:0} from hiding it again. */
         el.style.animation = 'ste-' + type + ' ' + dur + 's ease both';
+        el.addEventListener( 'animationend', function() { el.style.opacity = '1'; }, { once: true } );
     }
 
     if ( document.readyState === 'loading' ) {
