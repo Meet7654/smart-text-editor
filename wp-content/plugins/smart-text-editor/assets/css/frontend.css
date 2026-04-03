@@ -79,8 +79,8 @@
 
 /* Reveal: horizontal clip-path wipe — starts visible, clip does the work */
 @keyframes ste-reveal {
-    from { opacity: 1; clip-path: inset(0 100% 0 0); }
-    to   { opacity: 1; clip-path: inset(0 0 0 0); }
+    from { opacity: 1; -webkit-clip-path: inset(0 100% 0 0); clip-path: inset(0 100% 0 0); }
+    to   { opacity: 1; -webkit-clip-path: inset(0 0 0 0); clip-path: inset(0 0 0 0); }
 }
 
 /* Bounce: springs up from below with overshoot */

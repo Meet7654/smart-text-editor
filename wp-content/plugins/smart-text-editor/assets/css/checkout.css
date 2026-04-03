@@ -134,7 +134,7 @@
 /* Order Summary */
 .ste-checkout-summary {
     background: #fff; border-radius: 16px; padding: 28px; border: 1px solid #e8e8ec;
-    box-shadow: 0 1px 3px rgba(0,0,0,.04); position: sticky; top: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04); position: -webkit-sticky; position: sticky; top: 24px;
 }
 .ste-checkout-summary h2 { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
 .ste-summary-plan {

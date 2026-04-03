@@ -21,13 +21,13 @@
             <span class="ste-logo-text">Smart<strong>TextEditor</strong></span>
         </a>
         <nav class="ste-nav">
-            <a href="#features" class="ste-nav-link">Features</a>
-            <a href="#editor" class="ste-nav-link">Try Editor</a>
-            <a href="#fonts" class="ste-nav-link">Fonts</a>
-            <a href="#styles" class="ste-nav-link">Styles</a>
-            <a href="#pricing" class="ste-nav-link">Pricing</a>
+            <a href="<?php echo esc_url( home_url( '/#features' ) ); ?>" class="ste-nav-link">Features</a>
+            <a href="<?php echo esc_url( home_url( '/#editor' ) ); ?>" class="ste-nav-link">Try Editor</a>
+            <a href="<?php echo esc_url( home_url( '/#fonts' ) ); ?>" class="ste-nav-link">Fonts</a>
+            <a href="<?php echo esc_url( home_url( '/#styles' ) ); ?>" class="ste-nav-link">Styles</a>
+            <a href="<?php echo esc_url( home_url( '/#pricing' ) ); ?>" class="ste-nav-link">Pricing</a>
             <a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>" class="ste-nav-link">Contact</a>
-            <a href="#editor" class="ste-nav-btn">Start Writing</a>
+            <a href="<?php echo esc_url( home_url( '/#editor' ) ); ?>" class="ste-nav-btn">Start Writing</a>
         </nav>
         <button class="ste-mobile-toggle" aria-label="Menu">
             <span></span><span></span><span></span>
