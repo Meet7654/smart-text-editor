@@ -184,10 +184,6 @@ class STE_Checkout {
 
     public static function register_checkout_page() {
         add_rewrite_rule( '^checkout/?$', 'index.php?ste_checkout=1', 'top' );
-        if ( get_option( 'ste_flush_rewrite' ) ) {
-            flush_rewrite_rules();
-            delete_option( 'ste_flush_rewrite' );
-        }
     }
 
     public static function add_query_vars( $vars ) {
@@ -532,7 +528,7 @@ class STE_Checkout {
     <!-- Footer -->
     <tr><td style="background:#f9fafb;padding:24px 40px;text-align:center;border-top:1px solid #eee;">
         <p style="font-size:12px;color:#999;margin:0;">
-            &copy; ' . date( 'Y' ) . ' Smart Text Editor &bull; <a href="' . esc_url( $site_url ) . '" style="color:#6366f1;text-decoration:none;">' . esc_html( parse_url( $site_url, PHP_URL_HOST ) ) . '</a>
+            &copy; ' . gmdate( 'Y' ) . ' Smart Text Editor &bull; <a href="' . esc_url( $site_url ) . '" style="color:#6366f1;text-decoration:none;">' . esc_html( parse_url( $site_url, PHP_URL_HOST ) ) . '</a>
         </p>
     </td></tr>
 
@@ -551,9 +547,7 @@ class STE_Checkout {
         $sent = wp_mail( $to_email, $subject, $body, $headers );
 
         if ( ! $sent ) {
-            error_log( sprintf( 'STE: Failed to send license email to %s for order %s', $to_email, $order_number ) );
-        } else {
-            error_log( sprintf( 'STE: License email sent to %s for order %s', $to_email, $order_number ) );
+            // Email failed silently — order is stored, admin can resend from Orders page
         }
     }
 
@@ -723,7 +717,7 @@ class STE_Checkout {
     public static function render_orders_page() {
         global $wpdb;
         $table  = $wpdb->prefix . 'ste_orders';
-        $orders = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY created_at DESC LIMIT 100" );
+        $orders = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM `{$table}` ORDER BY created_at DESC LIMIT %d", 100 ) );
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'Smart Text Editor — Orders', 'smart-text-editor' ); ?></h1>

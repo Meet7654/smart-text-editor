@@ -38,11 +38,19 @@ class STE_Shortcode {
     }
 
     /**
-     * Wrap content in .ste-output so frontend.css rules (tables, styled spans,
-     * animations) apply. Also enqueue assets for archive/non-singular contexts.
+     * Wrap content in .ste-output only when the post was created with STE.
+     * Detects STE content by presence of ste- classes or data-ste-anim attributes.
      */
     public static function wrap_content( $content ) {
         if ( empty( $content ) ) return $content;
+
+        // Only wrap if content contains STE-specific markup
+        if ( strpos( $content, 'data-ste-anim' ) === false
+            && strpos( $content, 'ste-output' ) === false
+            && strpos( $content, '-webkit-text-fill-color' ) === false
+            && strpos( $content, 'text-shadow' ) === false ) {
+            return $content;
+        }
 
         wp_enqueue_style( 'ste-front' );
         wp_enqueue_script( 'ste-front' );

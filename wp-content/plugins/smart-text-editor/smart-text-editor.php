@@ -77,8 +77,7 @@ add_action( 'admin_notices', 'ste_smtp_config_notice' );
 
 /* ── Stop loading if FluentSMTP is not active ── */
 function ste_init() {
-    if ( ! ste_check_fluentsmtp() ) return;
-
+    // Load editor & core features regardless of FluentSMTP
     require_once STE_PLUGIN_DIR . 'includes/class-ste-license.php';
     require_once STE_PLUGIN_DIR . 'includes/class-ste-admin.php';
     require_once STE_PLUGIN_DIR . 'includes/class-ste-editor.php';
@@ -93,7 +92,6 @@ function ste_init() {
     STE_Shortcode::init();
     STE_Checkout::init();
 
-    // Run DB migration if needed (adds expires_at column)
     if ( get_option( 'ste_db_version', '0' ) !== STE_VERSION ) {
         STE_Checkout::create_table();
         update_option( 'ste_db_version', STE_VERSION );
@@ -101,14 +99,46 @@ function ste_init() {
 }
 add_action( 'plugins_loaded', 'ste_init' );
 
+/* ── Soft-block purchases (not plugin load) if FluentSMTP missing ── */
+function ste_init_checkout_guard() {
+    if ( ! ste_check_fluentsmtp() ) return;
+
+    // FluentSMTP is active — purchases are allowed
+}
+add_action( 'plugins_loaded', 'ste_init_checkout_guard' );
+
 /* Activation */
 function ste_activate() {
     require_once STE_PLUGIN_DIR . 'includes/class-ste-checkout.php';
+    require_once STE_PLUGIN_DIR . 'includes/class-ste-license.php';
     STE_Checkout::create_table();
-    update_option( 'ste_flush_rewrite', true );
+    STE_License::init_salt();
     flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, 'ste_activate' );
+
+/* Deactivation */
+function ste_deactivate() {
+    flush_rewrite_rules();
+}
+register_deactivation_hook( __FILE__, 'ste_deactivate' );
+
+/* Uninstall — clean up all plugin data */
+function ste_uninstall() {
+    global $wpdb;
+    $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}ste_orders" );
+    $options = array(
+        'ste_active_plan', 'ste_license_key', 'ste_license_activated',
+        'ste_license_expires', 'ste_billing_cycle', 'ste_trial_used',
+        'ste_trial_started', 'ste_trial_expires', 'ste_cf_mode',
+        'ste_cf_app_id', 'ste_cf_secret_key', 'ste_db_version',
+        'ste_flush_rewrite', 'ste_license_salt',
+    );
+    foreach ( $options as $opt ) {
+        delete_option( $opt );
+    }
+}
+register_uninstall_hook( __FILE__, 'ste_uninstall' );
 
 /* Plugin action link */
 function ste_action_links( $links ) {

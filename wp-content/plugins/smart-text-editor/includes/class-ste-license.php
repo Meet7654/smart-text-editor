@@ -77,12 +77,33 @@ class STE_License {
     /**
      * Valid license key prefixes per plan.
      * In production, these would be validated against a remote API.
-     * For now we use a local prefix + hash check.
+     * For now we use a local prefix + HMAC-SHA256 check.
      */
     private static $key_prefixes = array(
         'pro'      => 'STE-PRO-',
         'business' => 'STE-BIZ-',
     );
+
+    /**
+     * Return the per-installation salt stored in wp_options.
+     * Generated once on activation using random_bytes — never hardcoded.
+     */
+    private static function get_salt() {
+        $salt = get_option( 'ste_license_salt', '' );
+        if ( empty( $salt ) ) {
+            $salt = bin2hex( random_bytes( 32 ) ); // 64-char hex, 256-bit entropy
+            update_option( 'ste_license_salt', $salt, false ); // autoload=false
+        }
+        return $salt;
+    }
+
+    /**
+     * Public wrapper called on activation to eagerly generate the salt.
+     * Safe to call multiple times — get_salt() only writes if missing.
+     */
+    public static function init_salt() {
+        self::get_salt();
+    }
 
     public static function init() {
         add_action( 'admin_menu', array( __CLASS__, 'add_submenu' ), 20 );
@@ -225,12 +246,13 @@ class STE_License {
         $pattern = '/^' . preg_quote( $prefix, '/' ) . '[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/';
         if ( ! preg_match( $pattern, $key ) ) return false;
 
-        // Checksum: last 4 chars must match a hash derived from the rest
+        // Checksum: last 4 chars must match an HMAC-SHA256 digest of the key body
+        // using a per-installation secret salt — never hardcoded in source.
         $body     = substr( $key, 0, -4 );
-        $expected = strtoupper( substr( md5( $body . 'ste_salt_2024' ), 0, 4 ) );
+        $expected = strtoupper( substr( hash_hmac( 'sha256', $body, self::get_salt() ), 0, 4 ) );
         $actual   = substr( $key, -4 );
 
-        return $actual === $expected;
+        return hash_equals( $expected, $actual ); // timing-safe comparison
     }
 
     /**
@@ -253,14 +275,14 @@ class STE_License {
         $seg1   = strtoupper( substr( bin2hex( random_bytes( 2 ) ), 0, 4 ) );
         $seg2   = strtoupper( substr( bin2hex( random_bytes( 2 ) ), 0, 4 ) );
         $body   = $prefix . $seg1 . '-' . $seg2 . '-';
-        $check  = strtoupper( substr( md5( $body . 'ste_salt_2024' ), 0, 4 ) );
+        $check  = strtoupper( substr( hash_hmac( 'sha256', $body, self::get_salt() ), 0, 4 ) );
         return $body . $check;
     }
 
     /* ── Handle activation ── */
 
     public static function handle_activate() {
-        if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Unauthorized' );
+        if ( ! current_user_can( 'manage_options' ) ) wp_die( esc_html__( 'Unauthorized', 'smart-text-editor' ) );
         check_admin_referer( 'ste_license_action' );
 
         $key = isset( $_POST['ste_license_key'] ) ? sanitize_text_field( wp_unslash( $_POST['ste_license_key'] ) ) : '';
@@ -305,7 +327,7 @@ class STE_License {
     /* ── Handle deactivation ── */
 
     public static function handle_deactivate() {
-        if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Unauthorized' );
+        if ( ! current_user_can( 'manage_options' ) ) wp_die( esc_html__( 'Unauthorized', 'smart-text-editor' ) );
         check_admin_referer( 'ste_license_action' );
 
         delete_option( 'ste_license_key' );
@@ -321,7 +343,7 @@ class STE_License {
     /* ── Handle start trial ── */
 
     public static function handle_start_trial() {
-        if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Unauthorized' );
+        if ( ! current_user_can( 'manage_options' ) ) wp_die( esc_html__( 'Unauthorized', 'smart-text-editor' ) );
         check_admin_referer( 'ste_license_action' );
 
         if ( ! self::can_start_trial() ) {
