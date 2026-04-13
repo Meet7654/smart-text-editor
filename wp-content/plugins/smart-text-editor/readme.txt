@@ -2,7 +2,7 @@
 Contributors: meetpatel
 Tags: editor, text editor, rich text, custom editor, page builder
 Requires at least: 5.8
-Tested up to: 6.9
+Tested up to: 6.5
 Requires PHP: 7.4
 Stable tag: 1.3.0
 License: GPL-2.0-or-later

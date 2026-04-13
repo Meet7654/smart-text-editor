@@ -315,7 +315,7 @@ class STE_License {
         // Fallback if no order found
         if ( empty( $expires_at ) ) {
             $period     = ( 'yearly' === $billing_cycle ) ? '+365 days' : '+30 days';
-            $expires_at = date( 'Y-m-d H:i:s', strtotime( $period, current_time( 'timestamp' ) ) );
+            $expires_at = gmdate( 'Y-m-d H:i:s', strtotime( $period, current_time( 'timestamp' ) ) );
         }
         update_option( 'ste_license_expires', $expires_at );
         update_option( 'ste_billing_cycle', $billing_cycle );
@@ -351,7 +351,7 @@ class STE_License {
             exit;
         }
 
-        $trial_expires = date( 'Y-m-d H:i:s', strtotime( '+7 days', current_time( 'timestamp' ) ) );
+        $trial_expires = gmdate( 'Y-m-d H:i:s', strtotime( '+7 days', current_time( 'timestamp' ) ) );
         update_option( 'ste_trial_used', true );
         update_option( 'ste_trial_started', current_time( 'mysql' ) );
         update_option( 'ste_trial_expires', $trial_expires );
@@ -430,7 +430,7 @@ class STE_License {
             $trial_exp       = self::get_trial_expires();
             $base_plan       = get_option( 'ste_active_plan', 'free' ); // actual plan without trial override
             ?>
-            <div class="ste-license-status <?php echo $is_on_trial ? 'ste-license-status-trial' : ''; ?>">
+            <div class="ste-license-status <?php echo esc_attr( $is_on_trial ? 'ste-license-status-trial' : '' ); ?>">
                 <div class="ste-license-status-inner">
                     <?php if ( $is_on_trial ) : ?>
                         <div class="ste-license-plan-badge ste-badge-trial">
@@ -457,7 +457,7 @@ class STE_License {
                             </div>
                             <div class="ste-validity-row">
                                 <span class="ste-validity-label">Time Remaining</span>
-                                <span class="ste-validity-value <?php echo $trial_warning ? 'ste-validity-warning' : 'ste-validity-ok'; ?>">
+                                <span class="ste-validity-value <?php echo esc_attr( $trial_warning ? 'ste-validity-warning' : 'ste-validity-ok' ); ?>">
                                     <?php
                                     if ( $trial_days > 0 ) {
                                         echo esc_html( $trial_days . ' day' . ( $trial_days !== 1 ? 's' : '' ) . ', ' . $trial_hours . ' hour' . ( $trial_hours !== 1 ? 's' : '' ) );
@@ -495,7 +495,7 @@ class STE_License {
                             </div>
                             <div class="ste-validity-row">
                                 <span class="ste-validity-label">Time Remaining</span>
-                                <span class="ste-validity-value <?php echo $is_expiring_soon ? 'ste-validity-warning' : 'ste-validity-ok'; ?>">
+                                <span class="ste-validity-value <?php echo esc_attr( $is_expiring_soon ? 'ste-validity-warning' : 'ste-validity-ok' ); ?>">
                                     <?php
                                     if ( $expires_at ) {
                                         $diff = strtotime( $expires_at ) - current_time( 'timestamp' );
@@ -570,7 +570,7 @@ class STE_License {
                     $is_upgrade = ! $active && array_search( $key, array_keys( $plans ) ) > array_search( $current, array_keys( $plans ) );
                     $monthly_equiv = $p['price_yearly_num'] > 0 ? round( $p['price_yearly_num'] / 12 ) : 0;
                 ?>
-                <div class="ste-plan-card <?php echo $active ? 'ste-plan-active' : ''; ?> <?php echo 'pro' === $key ? 'ste-plan-popular' : ''; ?>">
+                <div class="ste-plan-card <?php echo esc_attr( $active ? 'ste-plan-active' : '' ); ?> <?php echo esc_attr( 'pro' === $key ? 'ste-plan-popular' : '' ); ?>">
                     <?php if ( $active ) : ?>
                         <span class="ste-plan-tag ste-tag-active">Current Plan</span>
                     <?php elseif ( 'pro' === $key ) : ?>
@@ -593,15 +593,15 @@ class STE_License {
                     <?php endif; ?>
 
                     <ul class="ste-plan-features">
-                        <li class="<?php echo $p['max_fonts'] >= 999 ? 'ste-feat-yes' : ''; ?>"><?php echo $p['max_fonts'] >= 999 ? '50+ fonts' : $p['max_fonts'] . ' fonts'; ?></li>
-                        <li class="<?php echo $p['max_presets'] >= 999 ? 'ste-feat-yes' : ''; ?>"><?php echo $p['max_presets'] >= 999 ? 'Unlimited presets' : $p['max_presets'] . ' presets'; ?></li>
-                        <li class="<?php echo $p['effects'] ? 'ste-feat-yes' : 'ste-feat-no'; ?>">Style effects</li>
-                        <li class="<?php echo $p['animations'] ? 'ste-feat-yes' : 'ste-feat-no'; ?>">Scroll animations</li>
-                        <li class="<?php echo $p['table_editor'] ? 'ste-feat-yes' : 'ste-feat-no'; ?>">Table editor</li>
-                        <li class="<?php echo $p['export_css'] ? 'ste-feat-yes' : 'ste-feat-no'; ?>">CSS export</li>
-                        <li class="<?php echo $p['custom_presets'] ? 'ste-feat-yes' : 'ste-feat-no'; ?>">Custom presets</li>
-                        <li class="<?php echo $p['custom_fonts'] ? 'ste-feat-yes' : 'ste-feat-no'; ?>">Custom font uploads</li>
-                        <li class="<?php echo $p['whitelabel'] ? 'ste-feat-yes' : 'ste-feat-no'; ?>">White-label</li>
+                        <li class="<?php echo esc_attr( $p['max_fonts'] >= 999 ? 'ste-feat-yes' : '' ); ?>"><?php echo esc_html( $p['max_fonts'] >= 999 ? '50+ fonts' : $p['max_fonts'] . ' fonts' ); ?></li>
+                        <li class="<?php echo esc_attr( $p['max_presets'] >= 999 ? 'ste-feat-yes' : '' ); ?>"><?php echo esc_html( $p['max_presets'] >= 999 ? 'Unlimited presets' : $p['max_presets'] . ' presets' ); ?></li>
+                        <li class="<?php echo esc_attr( $p['effects'] ? 'ste-feat-yes' : 'ste-feat-no' ); ?>">Style effects</li>
+                        <li class="<?php echo esc_attr( $p['animations'] ? 'ste-feat-yes' : 'ste-feat-no' ); ?>">Scroll animations</li>
+                        <li class="<?php echo esc_attr( $p['table_editor'] ? 'ste-feat-yes' : 'ste-feat-no' ); ?>">Table editor</li>
+                        <li class="<?php echo esc_attr( $p['export_css'] ? 'ste-feat-yes' : 'ste-feat-no' ); ?>">CSS export</li>
+                        <li class="<?php echo esc_attr( $p['custom_presets'] ? 'ste-feat-yes' : 'ste-feat-no' ); ?>">Custom presets</li>
+                        <li class="<?php echo esc_attr( $p['custom_fonts'] ? 'ste-feat-yes' : 'ste-feat-no' ); ?>">Custom font uploads</li>
+                        <li class="<?php echo esc_attr( $p['whitelabel'] ? 'ste-feat-yes' : 'ste-feat-no' ); ?>">White-label</li>
                     </ul>
 
                     <?php if ( $active ) : ?>

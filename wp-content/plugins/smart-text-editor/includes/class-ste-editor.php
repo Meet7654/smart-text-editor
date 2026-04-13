@@ -285,14 +285,14 @@ class STE_Editor {
             <!-- ═══ ROW 2: Style Effects Bar ═══ -->
             <div id="ste-style-bar">
                 <div id="ste-style-tabs">
-                    <button type="button" class="ste-st<?php echo $plan !== 'free' ? ' active' : ''; ?>" data-tab="shadow" data-ste-feature="effects">Shadow</button>
+                    <button type="button" class="ste-st<?php echo esc_attr( $plan !== 'free' ? ' active' : '' ); ?>" data-tab="shadow" data-ste-feature="effects">Shadow</button>
                     <button type="button" class="ste-st" data-tab="gradient" data-ste-feature="effects">Gradient</button>
                     <button type="button" class="ste-st" data-tab="threed" data-ste-feature="effects">3D</button>
                     <button type="button" class="ste-st" data-tab="glow" data-ste-feature="effects">Glow</button>
                     <button type="button" class="ste-st" data-tab="anim" data-ste-feature="animations">Animation</button>
-                    <button type="button" class="ste-st<?php echo $plan === 'free' ? ' active' : ''; ?>" data-tab="presets">Presets</button>
+                    <button type="button" class="ste-st<?php echo esc_attr( $plan === 'free' ? ' active' : '' ); ?>" data-tab="presets">Presets</button>
                 </div>
-                <div class="ste-sp<?php echo $plan !== 'free' ? ' active' : ''; ?>" data-panel="shadow">
+                <div class="ste-sp<?php echo esc_attr( $plan !== 'free' ? ' active' : '' ); ?>" data-panel="shadow">
                     <label>X <span class="ste-rv" data-for="shadow-x">0</span>px<input type="range" id="ste-shadow-x" min="-50" max="50" value="0"></label>
                     <label>Y <span class="ste-rv" data-for="shadow-y">0</span>px<input type="range" id="ste-shadow-y" min="-50" max="50" value="0"></label>
                     <label>Blur <span class="ste-rv" data-for="shadow-blur">0</span>px<input type="range" id="ste-shadow-blur" min="0" max="80" value="0"></label>
@@ -327,7 +327,7 @@ class STE_Editor {
                     <button type="button" class="ste-clear-fx" id="ste-anim-preview">Preview</button>
                     <button type="button" class="ste-clear-fx" data-clear="animation">Clear</button>
                 </div>
-                <div class="ste-sp<?php echo $plan === 'free' ? ' active' : ''; ?>" data-panel="presets">
+                <div class="ste-sp<?php echo esc_attr( $plan === 'free' ? ' active' : '' ); ?>" data-panel="presets">
                     <div id="ste-presets-list"></div>
                     <div class="ste-preset-row"><input type="text" id="ste-preset-name" placeholder="Preset name…"><button type="button" class="ste-apply" id="ste-preset-save">Save</button></div>
                 </div>

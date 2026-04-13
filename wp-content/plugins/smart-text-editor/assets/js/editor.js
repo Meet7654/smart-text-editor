@@ -141,6 +141,39 @@
     }
     function escHtml(s) { var d = document.createElement('div'); d.appendChild(document.createTextNode(s)); return d.innerHTML; }
     function escAttr(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    /* Sanitize raw HTML from the source editor using DOMParser.
+     * Walks every element and removes dangerous tags and event attributes. */
+    function sanitizeSourceHtml( html ) {
+        var BANNED_TAGS = { SCRIPT:1, IFRAME:1, OBJECT:1, EMBED:1, FORM:1, BASE:1, META:1, LINK:1 };
+        var doc = ( new DOMParser() ).parseFromString( html, 'text/html' );
+        var walker = document.createTreeWalker( doc.body, NodeFilter.SHOW_ELEMENT );
+        var toRemove = [];
+        var node = walker.nextNode();
+        while ( node ) {
+            if ( BANNED_TAGS[ node.tagName ] ) {
+                toRemove.push( node );
+            } else {
+                /* Remove all on* event attributes and javascript: hrefs */
+                var attrs = Array.prototype.slice.call( node.attributes );
+                attrs.forEach( function( attr ) {
+                    if ( /^on/i.test( attr.name ) ) {
+                        node.removeAttribute( attr.name );
+                    } else if ( /^(href|src|action)$/i.test( attr.name ) ) {
+                        var v = attr.value.replace( /\s/g, '' ).toLowerCase();
+                        if ( v.indexOf('javascript:') === 0 || v.indexOf('data:text/html') === 0 ) {
+                            node.removeAttribute( attr.name );
+                        }
+                    }
+                });
+            }
+            node = walker.nextNode();
+        }
+        toRemove.forEach( function( el ) {
+            if ( el.parentNode ) el.parentNode.removeChild( el );
+        });
+        return doc.body.innerHTML;
+    }
     var openModals = [];
     function openModal(id) {
         document.getElementById(id).classList.remove('ste-hidden');
@@ -424,14 +457,53 @@
 
     /* ━━━ Link ━━━ */
     function initLink() {
-        var handler = function () {
+        /* Build a custom link modal once */
+        var modal = document.getElementById('ste-link-modal');
+        if ( !modal ) {
+            modal = document.createElement('div');
+            modal.id = 'ste-link-modal';
+            modal.className = 'ste-modal ste-hidden';
+            modal.innerHTML =
+                '<div class="ste-modal-box" style="width:400px;">'
+                + '<div class="ste-modal-head"><h3>Insert Link</h3><button type="button" class="ste-modal-x">&times;</button></div>'
+                + '<div style="padding:20px;">'
+                + '<label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">URL</label>'
+                + '<input type="url" id="ste-link-url" placeholder="https://" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">'
+                + '<div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">'
+                + '<button type="button" id="ste-link-cancel" style="padding:7px 18px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;">Cancel</button>'
+                + '<button type="button" id="ste-link-insert" style="padding:7px 18px;border:none;border-radius:6px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Insert</button>'
+                + '</div></div></div>';
+            document.body.appendChild(modal);
+
+            modal.querySelector('.ste-modal-x').addEventListener('click', function () { closeModal('ste-link-modal'); });
+            modal.addEventListener('click', function (e) { if (e.target === modal) closeModal('ste-link-modal'); });
+            document.getElementById('ste-link-cancel').addEventListener('click', function () { closeModal('ste-link-modal'); });
+            document.getElementById('ste-link-insert').addEventListener('click', insertLink);
+            document.getElementById('ste-link-url').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); insertLink(); }
+            });
+        }
+
+        function openLinkModal() {
             restoreSelection();
-            var url = prompt('Enter URL:', 'https://');
-            if (url) { restoreSelection(); exec('createLink', url); sync(); }
-        };
+            var urlInput = document.getElementById('ste-link-url');
+            urlInput.value = 'https://';
+            openModal('ste-link-modal');
+            setTimeout(function () { urlInput.select(); }, 50);
+        }
+
+        function insertLink() {
+            var url = document.getElementById('ste-link-url').value.trim();
+            closeModal('ste-link-modal');
+            if (!url || url === 'https://') return;
+            restoreSelection();
+            exec('createLink', url);
+            sync();
+        }
+
         ['ste-btn-link', 'ste-ft-link'].forEach(function (id) {
             var b = document.getElementById(id);
-            if (b) b.addEventListener('click', handler);
+            if (b) b.addEventListener('click', openLinkModal);
         });
     }
 
@@ -824,14 +896,9 @@
                 srcEl.style.display = 'block';
                 srcEl.focus();
             } else {
-                /* Sanitize: strip <script>, <iframe>, event handlers before inserting */
-                var clean = srcEl.value
-                    .replace(/<script[\s\S]*?<\/script>/gi, '')
-                    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
-                    .replace(/<object[\s\S]*?<\/object>/gi, '')
-                    .replace(/<embed[\s\S]*?>/gi, '')
-                    .replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '');
-                editor.innerHTML = clean;
+                /* Sanitize source HTML using DOMParser — strips scripts, iframes,
+                   and all event handler attributes structurally, not via regex */
+                editor.innerHTML = sanitizeSourceHtml( srcEl.value );
                 editor.style.display = '';
                 srcEl.style.display = 'none';
                 sync();
@@ -1158,22 +1225,94 @@
             localStorage.setItem('ste_presets', JSON.stringify(p)); ni.value = ''; renderPresets(); toast('Preset saved');
         });
     }
-    function getUserPresets() { try { return JSON.parse(localStorage.getItem('ste_presets')) || []; } catch (e) { return []; } }
+    function getUserPresets() {
+        try {
+            var raw = JSON.parse( localStorage.getItem('ste_presets') ) || [];
+            // Sanitize each preset field on the way out — never trust localStorage
+            return raw.map( function(pr) {
+                return {
+                    name: sanitizeText( pr.name || '' ),
+                    css:  sanitizeCss( pr.css  || '' ),
+                    cls:  sanitizeCls( pr.cls  || 'ste-styled' )
+                };
+            });
+        } catch(e) { return []; }
+    }
+
+    /* Allow only safe CSS property:value pairs — strip anything with url(), expression(), javascript: */
+    function sanitizeCss( css ) {
+        return css.split(';').filter( function(decl) {
+            var d = decl.toLowerCase().replace(/\s/g,'');
+            return d.length > 0
+                && d.indexOf('javascript:') === -1
+                && d.indexOf('expression(') === -1
+                && d.indexOf('url(')         === -1
+                && d.indexOf('import')       === -1;
+        }).join(';');
+    }
+
+    /* Allow only alphanumeric, hyphen, underscore, and space in class names */
+    function sanitizeCls( cls ) {
+        return cls.replace(/[^a-zA-Z0-9\-_ ]/g, '');
+    }
+
+    /* Strip all HTML tags from plain text values */
+    function sanitizeText( str ) {
+        var d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML; // returns HTML-entity-encoded plain text
+    }
+
     function renderPresets() {
-        var list = document.getElementById('ste-presets-list'); if (!list) return;
+        var list = document.getElementById('ste-presets-list');
+        if (!list) return;
         var allPresets = DEFAULT_PRESETS.concat(getUserPresets());
         list.innerHTML = '';
         allPresets.forEach(function (pr, i) {
             var isDefault = i < DEFAULT_PRESETS.length;
-            var el = document.createElement('div'); el.className = 'ste-preset-item' + (isDefault ? ' ste-preset-default' : '');
-            var html = '<span class="ste-preset-item-preview" style="' + escAttr(pr.css) + '">Aa</span><span class="ste-preset-item-name">' + escHtml(pr.name) + '</span>';
-            if (!isDefault) html += '<button type="button" class="ste-preset-del" data-idx="' + (i - DEFAULT_PRESETS.length) + '">&times;</button>';
-            el.innerHTML = html;
-            el.addEventListener('click', function (e) { if (e.target.classList.contains('ste-preset-del')) return; var a = {}; if (pr.cls) a['class'] = pr.cls; if (wrapSelection(pr.css, a)) toast('Preset: ' + pr.name); });
+
+            /* Build DOM nodes — never use innerHTML with user-controlled data */
+            var el = document.createElement('div');
+            el.className = 'ste-preset-item' + (isDefault ? ' ste-preset-default' : '');
+
+            var preview = document.createElement('span');
+            preview.className = 'ste-preset-item-preview';
+            preview.setAttribute('style', sanitizeCss(pr.css)); // sanitized CSS only
+            preview.textContent = 'Aa';
+
+            var nameSpan = document.createElement('span');
+            nameSpan.className = 'ste-preset-item-name';
+            nameSpan.textContent = pr.name; // textContent — no HTML injection possible
+
+            el.appendChild(preview);
+            el.appendChild(nameSpan);
+
+            if (!isDefault) {
+                var delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.className = 'ste-preset-del';
+                delBtn.setAttribute('data-idx', String(i - DEFAULT_PRESETS.length));
+                delBtn.textContent = '\u00D7';
+                delBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var idx = parseInt(this.getAttribute('data-idx'), 10);
+                    var p = getUserPresets();
+                    p.splice(idx, 1);
+                    localStorage.setItem('ste_presets', JSON.stringify(p));
+                    renderPresets();
+                    toast('Deleted');
+                });
+                el.appendChild(delBtn);
+            }
+
+            el.addEventListener('click', function (e) {
+                if (e.target.classList.contains('ste-preset-del')) return;
+                var a = {};
+                if (pr.cls) a['class'] = sanitizeCls(pr.cls); // sanitized class only
+                if (wrapSelection(sanitizeCss(pr.css), a)) toast('Preset: ' + pr.name);
+            });
+
             list.appendChild(el);
-        });
-        list.querySelectorAll('.ste-preset-del').forEach(function (b) {
-            b.addEventListener('click', function (e) { e.stopPropagation(); var p = getUserPresets(); p.splice(+this.getAttribute('data-idx'), 1); localStorage.setItem('ste_presets', JSON.stringify(p)); renderPresets(); toast('Deleted'); });
         });
     }
 

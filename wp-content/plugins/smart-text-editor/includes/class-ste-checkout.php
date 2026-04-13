@@ -48,7 +48,31 @@ class STE_Checkout {
     }
 
     public static function get_cf_secret_key() {
-        return get_option( 'ste_cf_secret_key', '' );
+        $encrypted = get_option( 'ste_cf_secret_key', '' );
+        if ( empty( $encrypted ) ) return '';
+        return self::decrypt_value( $encrypted );
+    }
+
+    /**
+     * Encrypt a value using WordPress AUTH_KEY as the encryption key.
+     * Falls back to plain storage on hosts without openssl.
+     */
+    public static function encrypt_value( $value ) {
+        if ( ! function_exists( 'openssl_encrypt' ) ) return $value;
+        $key    = defined( 'AUTH_KEY' ) ? AUTH_KEY : wp_salt( 'auth' );
+        $iv     = openssl_random_pseudo_bytes( 16 );
+        $cipher = openssl_encrypt( $value, 'AES-256-CBC', substr( hash( 'sha256', $key ), 0, 32 ), 0, $iv );
+        return base64_encode( $iv . '::' . $cipher );
+    }
+
+    private static function decrypt_value( $stored ) {
+        if ( ! function_exists( 'openssl_decrypt' ) ) return $stored;
+        $decoded = base64_decode( $stored );
+        if ( strpos( $decoded, '::' ) === false ) return $stored; // plain text fallback
+        list( $iv, $cipher ) = explode( '::', $decoded, 2 );
+        $key = defined( 'AUTH_KEY' ) ? AUTH_KEY : wp_salt( 'auth' );
+        $plain = openssl_decrypt( $cipher, 'AES-256-CBC', substr( hash( 'sha256', $key ), 0, 32 ), 0, $iv );
+        return $plain !== false ? $plain : $stored;
     }
 
     public static function get_cf_api_base() {
@@ -108,7 +132,15 @@ class STE_Checkout {
             'type' => 'string', 'sanitize_callback' => 'sanitize_text_field',
         ) );
         register_setting( 'ste_cashfree_settings', 'ste_cf_secret_key', array(
-            'type' => 'string', 'sanitize_callback' => 'sanitize_text_field',
+            'type' => 'string',
+            'sanitize_callback' => function( $v ) {
+                $v = sanitize_text_field( $v );
+                // Only re-encrypt if a new value was submitted (not the masked placeholder)
+                if ( ! empty( $v ) && strpos( $v, 'cfsk_' ) === 0 ) {
+                    return STE_Checkout::encrypt_value( $v );
+                }
+                return get_option( 'ste_cf_secret_key', '' ); // keep existing encrypted value
+            },
         ) );
 
     }
@@ -438,7 +470,7 @@ class STE_Checkout {
         // Calculate expiry based on billing cycle
         $billing_cycle = isset( $order->billing_cycle ) && 'yearly' === $order->billing_cycle ? 'yearly' : 'monthly';
         $expiry_period = ( 'yearly' === $billing_cycle ) ? '+365 days' : '+30 days';
-        $expires_at    = date( 'Y-m-d H:i:s', strtotime( $expiry_period, current_time( 'timestamp' ) ) );
+        $expires_at    = gmdate( 'Y-m-d H:i:s', strtotime( $expiry_period, current_time( 'timestamp' ) ) );
 
         // Update order
         $wpdb->update( $table, array(
@@ -538,10 +570,12 @@ class STE_Checkout {
 </body>
 </html>';
 
+        $host        = sanitize_text_field( wp_parse_url( $site_url, PHP_URL_HOST ) );
+        $admin_email = sanitize_email( get_option( 'admin_email' ) );
         $headers = array(
             'Content-Type: text/html; charset=UTF-8',
-            'From: Smart Text Editor <no-reply@' . parse_url( $site_url, PHP_URL_HOST ) . '>',
-            'Reply-To: ' . get_option( 'admin_email' ),
+            'From: Smart Text Editor <no-reply@' . $host . '>',
+            'Reply-To: ' . $admin_email,
         );
 
         $sent = wp_mail( $to_email, $subject, $body, $headers );
@@ -564,6 +598,19 @@ class STE_Checkout {
     }
 
     public static function handle_webhook( $request ) {
+        // Verify Cashfree webhook signature to prevent spoofed requests
+        $raw_body  = $request->get_body();
+        $timestamp = $request->get_header( 'x-webhook-timestamp' );
+        $received  = $request->get_header( 'x-webhook-signature' );
+
+        if ( $timestamp && $received && self::is_cf_configured() ) {
+            $signed_payload = $timestamp . $raw_body;
+            $expected       = base64_encode( hash_hmac( 'sha256', $signed_payload, self::get_cf_secret_key(), true ) );
+            if ( ! hash_equals( $expected, $received ) ) {
+                return new WP_REST_Response( array( 'status' => 'invalid_signature' ), 401 );
+            }
+        }
+
         $body = $request->get_json_params();
 
         if ( empty( $body['data']['order']['order_id'] ) ) {
@@ -626,9 +673,9 @@ class STE_Checkout {
             <h1><?php esc_html_e( 'Payment Settings — Cashfree', 'smart-text-editor' ); ?></h1>
 
             <!-- Email Delivery Status -->
-            <div style="max-width:640px;margin-top:20px;padding:18px 22px;border-radius:8px;border:1px solid <?php echo $smtp_ready ? '#a7f3d0' : '#fca5a5'; ?>;background:<?php echo $smtp_ready ? '#ecfdf5' : '#fef2f2'; ?>;">
-                <h2 style="margin:0 0 8px;font-size:15px;color:<?php echo $smtp_ready ? '#065f46' : '#991b1b'; ?>;">
-                    <?php echo $smtp_ready ? '&#10003; Email Delivery Ready' : '&#10007; Email Delivery Not Configured'; ?>
+            <div style="max-width:640px;margin-top:20px;padding:18px 22px;border-radius:8px;border:1px solid <?php echo esc_attr( $smtp_ready ? '#a7f3d0' : '#fca5a5' ); ?>;background:<?php echo esc_attr( $smtp_ready ? '#ecfdf5' : '#fef2f2' ); ?>;">
+                <h2 style="margin:0 0 8px;font-size:15px;color:<?php echo esc_attr( $smtp_ready ? '#065f46' : '#991b1b' ); ?>;">
+                    <?php echo $smtp_ready ? '<span>&#10003;</span> Email Delivery Ready' : '<span>&#10007;</span> Email Delivery Not Configured'; ?>
                 </h2>
                 <?php if ( $smtp_ready ) : ?>
                     <p style="margin:0;font-size:13px;color:#065f46;">
@@ -699,7 +746,7 @@ class STE_Checkout {
                     $env_color = 'production' === $mode ? '#065f46;background:#d1fae5' : '#92400e;background:#fef3c7';
                 ?>
                 <div style="margin-top:16px;padding:12px 16px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;">
-                    <span style="display:inline-block;padding:2px 10px;border-radius:50px;font-size:11px;font-weight:700;color:<?php echo $env_color; ?>;">
+                    <span style="display:inline-block;padding:2px 10px;border-radius:50px;font-size:11px;font-weight:700;color:<?php echo esc_attr( $env_color ); ?>;">
                         <?php echo esc_html( $env_label ); ?>
                     </span>
                     &nbsp; Cashfree is configured and ready.
@@ -793,7 +840,7 @@ class STE_Checkout {
                                 <?php if ( $order_expires && 'completed' === $order->status ) :
                                     $is_expired = current_time( 'timestamp' ) > strtotime( $order_expires );
                                 ?>
-                                    <span style="font-size:12px;<?php echo $is_expired ? 'color:#dc2626;' : 'color:#333;'; ?>">
+                                    <span style="font-size:12px;<?php echo esc_attr( $is_expired ? 'color:#dc2626;' : 'color:#333;' ); ?>">
                                         <?php echo esc_html( date_i18n( 'M j, Y', strtotime( $order_expires ) ) ); ?>
                                         <?php if ( $is_expired ) echo '<br><small style="color:#dc2626;">Expired</small>'; ?>
                                     </span>
