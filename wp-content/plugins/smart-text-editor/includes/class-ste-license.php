@@ -118,11 +118,17 @@ class STE_License {
     public static function get_plan() {
         $plan = get_option( 'ste_active_plan', 'free' );
         if ( ! isset( self::$plans[ $plan ] ) ) return 'free';
-        // For paid plans, verify license key still exists and hasn't expired
+
+        // For paid plans, verify license key still exists and hasn't expired.
+        // Use a static cache so this only runs once per request, not on every call.
         if ( 'free' !== $plan ) {
+            static $plan_cache = null;
+            if ( null !== $plan_cache ) return $plan_cache;
+
             $key = get_option( 'ste_license_key', '' );
             if ( empty( $key ) || ! self::validate_key( $key, $plan ) ) {
                 update_option( 'ste_active_plan', 'free' );
+                $plan_cache = 'free';
                 return 'free';
             }
             // Check expiration
@@ -133,8 +139,10 @@ class STE_License {
                 delete_option( 'ste_license_activated' );
                 delete_option( 'ste_license_expires' );
                 delete_option( 'ste_billing_cycle' );
+                $plan_cache = 'free';
                 return 'free';
             }
+            $plan_cache = $plan;
         }
 
         // If still on free, check for active trial
@@ -289,14 +297,14 @@ class STE_License {
         $key = strtoupper( trim( $key ) );
 
         if ( empty( $key ) ) {
-            wp_redirect( add_query_arg( 'ste_msg', 'empty_key', admin_url( 'admin.php?page=ste-license' ) ) );
+            wp_safe_redirect( add_query_arg( 'ste_msg', 'empty_key', admin_url( 'admin.php?page=ste-license' ) ) );
             exit;
         }
 
         $plan = self::plan_from_key( $key );
 
         if ( ! $plan || ! self::validate_key( $key, $plan ) ) {
-            wp_redirect( add_query_arg( 'ste_msg', 'invalid_key', admin_url( 'admin.php?page=ste-license' ) ) );
+            wp_safe_redirect( add_query_arg( 'ste_msg', 'invalid_key', admin_url( 'admin.php?page=ste-license' ) ) );
             exit;
         }
 
@@ -315,12 +323,12 @@ class STE_License {
         // Fallback if no order found
         if ( empty( $expires_at ) ) {
             $period     = ( 'yearly' === $billing_cycle ) ? '+365 days' : '+30 days';
-            $expires_at = gmdate( 'Y-m-d H:i:s', strtotime( $period, current_time( 'timestamp' ) ) );
+            $expires_at = gmdate( 'Y-m-d H:i:s', strtotime( $period ) );
         }
         update_option( 'ste_license_expires', $expires_at );
         update_option( 'ste_billing_cycle', $billing_cycle );
 
-        wp_redirect( add_query_arg( 'ste_msg', 'activated', admin_url( 'admin.php?page=ste-license' ) ) );
+        wp_safe_redirect( add_query_arg( 'ste_msg', 'activated', admin_url( 'admin.php?page=ste-license' ) ) );
         exit;
     }
 
@@ -336,7 +344,7 @@ class STE_License {
         delete_option( 'ste_billing_cycle' );
         update_option( 'ste_active_plan', 'free' );
 
-        wp_redirect( add_query_arg( 'ste_msg', 'deactivated', admin_url( 'admin.php?page=ste-license' ) ) );
+        wp_safe_redirect( add_query_arg( 'ste_msg', 'deactivated', admin_url( 'admin.php?page=ste-license' ) ) );
         exit;
     }
 
@@ -347,16 +355,16 @@ class STE_License {
         check_admin_referer( 'ste_license_action' );
 
         if ( ! self::can_start_trial() ) {
-            wp_redirect( add_query_arg( 'ste_msg', 'trial_unavailable', admin_url( 'admin.php?page=ste-license' ) ) );
+            wp_safe_redirect( add_query_arg( 'ste_msg', 'trial_unavailable', admin_url( 'admin.php?page=ste-license' ) ) );
             exit;
         }
 
-        $trial_expires = gmdate( 'Y-m-d H:i:s', strtotime( '+7 days', current_time( 'timestamp' ) ) );
+        $trial_expires = gmdate( 'Y-m-d H:i:s', strtotime( '+7 days' ) );
         update_option( 'ste_trial_used', true );
         update_option( 'ste_trial_started', current_time( 'mysql' ) );
         update_option( 'ste_trial_expires', $trial_expires );
 
-        wp_redirect( add_query_arg( 'ste_msg', 'trial_started', admin_url( 'admin.php?page=ste-license' ) ) );
+        wp_safe_redirect( add_query_arg( 'ste_msg', 'trial_started', admin_url( 'admin.php?page=ste-license' ) ) );
         exit;
     }
 
@@ -611,7 +619,7 @@ class STE_License {
                             <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin:0;">
                                 <input type="hidden" name="action" value="ste_deactivate_license">
                                 <?php wp_nonce_field( 'ste_license_action' ); ?>
-                                <button type="submit" class="ste-plan-btn ste-plan-btn-downgrade" onclick="return confirm('This will deactivate your license and downgrade to the Free plan. Continue?');">Downgrade to Free</button>
+                                <button type="submit" class="ste-plan-btn ste-plan-btn-downgrade" id="ste-btn-downgrade">Downgrade to Free</button>
                             </form>
                         <?php else : ?>
                             <span class="ste-plan-btn ste-plan-btn-current">Active</span>
@@ -667,7 +675,7 @@ class STE_License {
                         <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
                             <input type="hidden" name="action" value="ste_deactivate_license">
                             <?php wp_nonce_field( 'ste_license_action' ); ?>
-                            <button type="submit" class="ste-deactivate-btn" onclick="return confirm('This will deactivate your license and revert to the Free plan. Continue?');">Deactivate License</button>
+                            <button type="submit" class="ste-deactivate-btn" id="ste-btn-deactivate">Deactivate License</button>
                         </form>
                     </div>
                 <?php endif; ?>
@@ -701,6 +709,29 @@ class STE_License {
 
             toggle.addEventListener('change', function(){ update(this.checked); });
             update(false);
+
+            /* Confirmation dialogs for destructive actions */
+            ['ste-btn-downgrade', 'ste-btn-deactivate'].forEach(function(id) {
+                var btn = document.getElementById(id);
+                if (!btn) return;
+                btn.addEventListener('click', function(e) {
+                    var msg = id === 'ste-btn-downgrade'
+                        ? 'This will deactivate your license and downgrade to the Free plan. Continue?'
+                        : 'This will deactivate your license and revert to the Free plan. Continue?';
+                    var modal = document.createElement('div');
+                    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;';
+                    modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:400px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.2);font-family:inherit;">'
+                        + '<p style="font-size:15px;color:#333;margin:0 0 20px;line-height:1.6;">' + msg + '</p>'
+                        + '<div style="display:flex;gap:10px;justify-content:flex-end;">'
+                        + '<button id="ste-confirm-cancel" style="padding:8px 18px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;">Cancel</button>'
+                        + '<button id="ste-confirm-ok" style="padding:8px 18px;border:none;border-radius:6px;background:#dc2626;color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Confirm</button>'
+                        + '</div></div>';
+                    document.body.appendChild(modal);
+                    e.preventDefault();
+                    document.getElementById('ste-confirm-cancel').onclick = function() { modal.remove(); };
+                    document.getElementById('ste-confirm-ok').onclick = function() { modal.remove(); btn.closest('form').submit(); };
+                });
+            });
         })();
         </script>
         <?php

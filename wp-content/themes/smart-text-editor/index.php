@@ -869,25 +869,6 @@
             </div>
         </div>
 
-        <script>
-        (function(){
-            var toggle = document.getElementById('ste-pricing-cycle-toggle');
-            if (!toggle) return;
-            toggle.addEventListener('change', function(){
-                var yearly = this.checked;
-                document.querySelectorAll('.ste-hp-price-monthly, .ste-hp-period-monthly').forEach(function(el){ el.style.display = yearly ? 'none' : ''; });
-                document.querySelectorAll('.ste-hp-price-yearly, .ste-hp-period-yearly').forEach(function(el){ el.style.display = yearly ? '' : 'none'; });
-                document.querySelectorAll('.ste-pricing-yearly-info').forEach(function(el){ el.style.display = yearly ? 'block' : 'none'; });
-                document.querySelectorAll('.ste-hp-checkout-link').forEach(function(el){
-                    var plan = el.getAttribute('data-plan');
-                    el.href = '<?php echo esc_url( home_url( '/checkout/' ) ); ?>?plan=' + plan + '&billing=' + (yearly ? 'yearly' : 'monthly');
-                });
-                document.querySelectorAll('.ste-pricing-toggle-label').forEach(function(el){
-                    el.classList.toggle('ste-toggle-active', (yearly && el.dataset.cycle === 'yearly') || (!yearly && el.dataset.cycle === 'monthly'));
-                });
-            });
-        })();
-        </script>
     </div>
 </section>
 
@@ -1045,29 +1026,4 @@
     </div>
 </section>
 
-<script>
-/* Fallback animation observer if plugin frontend.js is not loaded */
-(function(){
-    if (window._steAnimInit) return;
-    window._steAnimInit = true;
-    var els = document.querySelectorAll('[data-ste-anim]');
-    if (!els.length) return;
-    if (!('IntersectionObserver' in window)) {
-        els.forEach(function(el){ el.style.opacity = '1'; });
-        return;
-    }
-    var io = new IntersectionObserver(function(entries){
-        entries.forEach(function(e){
-            if (e.isIntersecting) {
-                var t = e.target, type = t.getAttribute('data-ste-anim'),
-                    dur = parseFloat(t.getAttribute('data-ste-anim-dur')) || 0.6;
-                t.style.animation = 'ste-' + type + ' ' + dur + 's ease both';
-                t.addEventListener('animationend', function() { t.style.opacity = '1'; }, {once: true});
-                io.unobserve(t);
-            }
-        });
-    }, {threshold: 0.15});
-    els.forEach(function(el){ io.observe(el); });
-})();
-</script>
 <?php get_footer(); ?>

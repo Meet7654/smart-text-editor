@@ -67,8 +67,8 @@ class STE_Checkout {
 
     private static function decrypt_value( $stored ) {
         if ( ! function_exists( 'openssl_decrypt' ) ) return $stored;
-        $decoded = base64_decode( $stored );
-        if ( strpos( $decoded, '::' ) === false ) return $stored; // plain text fallback
+        $decoded = base64_decode( $stored, true );
+        if ( false === $decoded || strpos( $decoded, '::' ) === false ) return $stored; // plain text fallback
         list( $iv, $cipher ) = explode( '::', $decoded, 2 );
         $key = defined( 'AUTH_KEY' ) ? AUTH_KEY : wp_salt( 'auth' );
         $plain = openssl_decrypt( $cipher, 'AES-256-CBC', substr( hash( 'sha256', $key ), 0, 32 ), 0, $iv );
@@ -84,7 +84,7 @@ class STE_Checkout {
     public static function get_cf_js_url() {
         return 'production' === self::get_cf_mode()
             ? 'https://sdk.cashfree.com/js/v3/cashfree.js'
-            : 'https://sdk.cashfree.com/js/v3/cashfree.js';
+            : 'https://sdk.cashfree.com/js/v3/cashfree.sandbox.js';
     }
 
     public static function is_cf_configured() {
@@ -180,10 +180,26 @@ class STE_Checkout {
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta( $sql );
+
+        // Runtime migration: add columns that may be missing from older installs
+        $existing = array_column( $wpdb->get_results( "DESCRIBE `{$table}`" ), 'Field' );
+
+        if ( ! in_array( 'billing_cycle', $existing, true ) ) {
+            $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `billing_cycle` VARCHAR(10) NOT NULL DEFAULT 'monthly' AFTER `currency`" );
+        }
+        if ( ! in_array( 'expires_at', $existing, true ) ) {
+            $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `expires_at` DATETIME DEFAULT NULL AFTER `cf_payment_id`" );
+        }
+        if ( ! in_array( 'cf_payment_id', $existing, true ) ) {
+            $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `cf_payment_id` VARCHAR(50) DEFAULT '' AFTER `status`" );
+        }
+        if ( ! in_array( 'customer_phone', $existing, true ) ) {
+            $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `customer_phone` VARCHAR(20) DEFAULT '' AFTER `customer_email`" );
+        }
     }
 
     public static function generate_order_number() {
-        return 'STE-' . strtoupper( substr( uniqid(), -8 ) );
+        return 'STE-' . strtoupper( substr( bin2hex( random_bytes( 4 ) ), 0, 8 ) );
     }
 
     /**
@@ -236,10 +252,7 @@ class STE_Checkout {
     public static function enqueue_checkout_assets() {
         if ( ! get_query_var( 'ste_checkout' ) ) return;
 
-        wp_enqueue_style( 'ste-google-fonts',
-            'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap',
-            array(), null
-        );
+        wp_enqueue_style( 'ste-google-fonts', STE_GOOGLE_FONTS_URL, array(), null );
         wp_enqueue_style( 'ste-checkout', STE_PLUGIN_URL . 'assets/css/checkout.css', array(), STE_VERSION );
 
         // Cashfree JS SDK
@@ -272,23 +285,29 @@ class STE_Checkout {
         // Validate
         if ( ! in_array( $plan, array( 'pro', 'business' ), true ) ) {
             wp_send_json_error( array( 'message' => 'Invalid plan selected.' ) );
+            wp_die();
         }
         if ( empty( $name ) || strlen( $name ) < 2 ) {
             wp_send_json_error( array( 'message' => 'Please enter your full name.' ) );
+            wp_die();
         }
         if ( ! is_email( $email ) ) {
             wp_send_json_error( array( 'message' => 'Please enter a valid email address.' ) );
+            wp_die();
         }
         if ( empty( $phone ) || strlen( preg_replace( '/\D/', '', $phone ) ) < 10 ) {
             wp_send_json_error( array( 'message' => 'Please enter a valid phone number.' ) );
+            wp_die();
         }
 
         if ( ! self::is_cf_configured() ) {
             wp_send_json_error( array( 'message' => 'Payment gateway is not configured. Please contact the site administrator.' ) );
+            wp_die();
         }
 
         if ( ! self::is_smtp_configured() ) {
             wp_send_json_error( array( 'message' => 'Email delivery (FluentSMTP) is not configured. License keys cannot be sent. Please contact the site administrator.' ) );
+            wp_die();
         }
 
         // Determine amount
@@ -321,7 +340,7 @@ class STE_Checkout {
             'order_amount'   => $amount,
             'order_currency' => 'INR',
             'customer_details' => array(
-                'customer_id'    => 'cust_' . substr( md5( $email ), 0, 12 ),
+                'customer_id'    => 'cust_' . substr( hash( 'sha256', $email ), 0, 12 ),
                 'customer_name'  => $name,
                 'customer_email' => $email,
                 'customer_phone' => preg_replace( '/\D/', '', $phone ),
@@ -347,15 +366,21 @@ class STE_Checkout {
         ) );
 
         if ( is_wp_error( $response ) ) {
+            // Clean up the pending order since the API call failed
+            $wpdb->delete( $wpdb->prefix . 'ste_orders', array( 'order_number' => $order_number ), array( '%s' ) );
             wp_send_json_error( array( 'message' => 'Unable to connect to payment gateway. Please try again.' ) );
+            wp_die();
         }
 
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
         $code = wp_remote_retrieve_response_code( $response );
 
         if ( $code !== 200 || empty( $body['payment_session_id'] ) ) {
+            // Clean up the pending order since the Cashfree order creation failed
+            $wpdb->delete( $wpdb->prefix . 'ste_orders', array( 'order_number' => $order_number ), array( '%s' ) );
             $err_msg = isset( $body['message'] ) ? $body['message'] : 'Failed to create payment order.';
             wp_send_json_error( array( 'message' => $err_msg ) );
+            wp_die();
         }
 
         // Store Cashfree order ID
@@ -386,7 +411,7 @@ class STE_Checkout {
         if ( ! self::is_cf_configured() || empty( $order_number ) ) return false;
 
         // Fetch payment status from Cashfree
-        $response = wp_remote_get( self::get_cf_api_base() . '/orders/' . $order_number, array(
+        $response = wp_remote_get( self::get_cf_api_base() . '/orders/' . rawurlencode( $order_number ), array(
             'headers' => array(
                 'x-client-id'    => self::get_cf_app_id(),
                 'x-client-secret' => self::get_cf_secret_key(),
@@ -411,6 +436,12 @@ class STE_Checkout {
     public static function handle_return( $order_number, $plan ) {
         global $wpdb;
         $table = $wpdb->prefix . 'ste_orders';
+
+        // Acquire a row-level lock to prevent duplicate license generation
+        // on concurrent requests (e.g. webhook + browser return at the same time)
+        $wpdb->query( $wpdb->prepare(
+            "SELECT id FROM {$table} WHERE order_number = %s FOR UPDATE", $order_number
+        ) );
 
         // Get local order
         $order = $wpdb->get_row( $wpdb->prepare(
@@ -451,7 +482,7 @@ class STE_Checkout {
         $cf_payment_id  = '';
 
         // Get payment details
-        $pay_response = wp_remote_get( self::get_cf_api_base() . '/orders/' . $order_number . '/payments', array(
+        $pay_response = wp_remote_get( self::get_cf_api_base() . '/orders/' . rawurlencode( $order_number ) . '/payments', array(
             'headers' => array(
                 'x-client-id'    => self::get_cf_app_id(),
                 'x-client-secret' => self::get_cf_secret_key(),
@@ -470,7 +501,7 @@ class STE_Checkout {
         // Calculate expiry based on billing cycle
         $billing_cycle = isset( $order->billing_cycle ) && 'yearly' === $order->billing_cycle ? 'yearly' : 'monthly';
         $expiry_period = ( 'yearly' === $billing_cycle ) ? '+365 days' : '+30 days';
-        $expires_at    = gmdate( 'Y-m-d H:i:s', strtotime( $expiry_period, current_time( 'timestamp' ) ) );
+        $expires_at    = gmdate( 'Y-m-d H:i:s', strtotime( $expiry_period ) );
 
         // Update order
         $wpdb->update( $table, array(
@@ -560,7 +591,7 @@ class STE_Checkout {
     <!-- Footer -->
     <tr><td style="background:#f9fafb;padding:24px 40px;text-align:center;border-top:1px solid #eee;">
         <p style="font-size:12px;color:#999;margin:0;">
-            &copy; ' . gmdate( 'Y' ) . ' Smart Text Editor &bull; <a href="' . esc_url( $site_url ) . '" style="color:#6366f1;text-decoration:none;">' . esc_html( parse_url( $site_url, PHP_URL_HOST ) ) . '</a>
+            &copy; ' . gmdate( 'Y' ) . ' Smart Text Editor &bull; <a href="' . esc_url( $site_url ) . '" style="color:#6366f1;text-decoration:none;">' . esc_html( wp_parse_url( $site_url, PHP_URL_HOST ) ) . '</a>
         </p>
     </td></tr>
 
@@ -581,7 +612,13 @@ class STE_Checkout {
         $sent = wp_mail( $to_email, $subject, $body, $headers );
 
         if ( ! $sent ) {
-            // Email failed silently — order is stored, admin can resend from Orders page
+            // Log the failure so the admin can investigate via the debug log.
+            // The order is safely stored in the DB; the admin can resend from the Orders page.
+            error_log( sprintf(
+                'STE: wp_mail failed for order %s to %s',
+                $order_number,
+                $to_email
+            ) );
         }
     }
 
@@ -598,12 +635,16 @@ class STE_Checkout {
     }
 
     public static function handle_webhook( $request ) {
-        // Verify Cashfree webhook signature to prevent spoofed requests
+        // Verify Cashfree webhook signature to prevent spoofed requests.
+        // Reject the request if Cashfree is configured but signature headers are absent.
         $raw_body  = $request->get_body();
         $timestamp = $request->get_header( 'x-webhook-timestamp' );
         $received  = $request->get_header( 'x-webhook-signature' );
 
-        if ( $timestamp && $received && self::is_cf_configured() ) {
+        if ( self::is_cf_configured() ) {
+            if ( ! $timestamp || ! $received ) {
+                return new WP_REST_Response( array( 'status' => 'missing_signature' ), 401 );
+            }
             $signed_payload = $timestamp . $raw_body;
             $expected       = base64_encode( hash_hmac( 'sha256', $signed_payload, self::get_cf_secret_key(), true ) );
             if ( ! hash_equals( $expected, $received ) ) {
@@ -675,7 +716,7 @@ class STE_Checkout {
             <!-- Email Delivery Status -->
             <div style="max-width:640px;margin-top:20px;padding:18px 22px;border-radius:8px;border:1px solid <?php echo esc_attr( $smtp_ready ? '#a7f3d0' : '#fca5a5' ); ?>;background:<?php echo esc_attr( $smtp_ready ? '#ecfdf5' : '#fef2f2' ); ?>;">
                 <h2 style="margin:0 0 8px;font-size:15px;color:<?php echo esc_attr( $smtp_ready ? '#065f46' : '#991b1b' ); ?>;">
-                    <?php echo $smtp_ready ? '<span>&#10003;</span> Email Delivery Ready' : '<span>&#10007;</span> Email Delivery Not Configured'; ?>
+                    <?php echo $smtp_ready ? '<span>&#10003;</span> ' . esc_html__( 'Email Delivery Ready', 'smart-text-editor' ) : '<span>&#10007;</span> ' . esc_html__( 'Email Delivery Not Configured', 'smart-text-editor' ); ?>
                 </h2>
                 <?php if ( $smtp_ready ) : ?>
                     <p style="margin:0;font-size:13px;color:#065f46;">
@@ -828,9 +869,9 @@ class STE_Checkout {
                                 <span style="display:inline-block;padding:2px 10px;border-radius:50px;font-size:11px;font-weight:600;
                                     <?php
                                     switch ( $order->status ) {
-                                        case 'completed': echo 'background:#d1fae5;color:#065f46;'; break;
-                                        case 'pending': echo 'background:#fef3c7;color:#92400e;'; break;
-                                        default: echo 'background:#fee2e2;color:#991b1b;'; break;
+                                        case 'completed': echo esc_attr( 'background:#d1fae5;color:#065f46;' ); break;
+                                        case 'pending':   echo esc_attr( 'background:#fef3c7;color:#92400e;' ); break;
+                                        default:          echo esc_attr( 'background:#fee2e2;color:#991b1b;' ); break;
                                     }
                                     ?>">
                                     <?php echo esc_html( $order->status ); ?>
@@ -842,7 +883,7 @@ class STE_Checkout {
                                 ?>
                                     <span style="font-size:12px;<?php echo esc_attr( $is_expired ? 'color:#dc2626;' : 'color:#333;' ); ?>">
                                         <?php echo esc_html( date_i18n( 'M j, Y', strtotime( $order_expires ) ) ); ?>
-                                        <?php if ( $is_expired ) echo '<br><small style="color:#dc2626;">Expired</small>'; ?>
+                                        <?php if ( $is_expired ) echo '<br><small style="color:#dc2626;">' . esc_html__( 'Expired', 'smart-text-editor' ) . '</small>'; ?>
                                     </span>
                                 <?php else : ?>
                                     —

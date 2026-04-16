@@ -1,11 +1,5 @@
 <?php
 /**
- * AJAX handlers (reserved for future use — main save goes through WP post form).
+ * Reserved for future AJAX handlers (auto-save, etc.).
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
-
-class STE_Ajax {
-    public static function init() {
-        // Reserved for future AJAX features (auto-save, etc.)
-    }
-}

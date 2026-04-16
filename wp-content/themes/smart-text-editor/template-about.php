@@ -75,40 +75,4 @@ endwhile;
     </div>
 </section>
 
-<style>
-.ste-about-hero {
-    padding: 140px 0 60px;
-    background: linear-gradient(135deg, #f8f7ff 0%, #eef2ff 100%);
-}
-.ste-about-stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-    text-align: center;
-}
-.ste-about-stat {
-    padding: 20px;
-}
-.ste-about-stat-num {
-    display: block;
-    font-size: 40px;
-    font-weight: 900;
-    letter-spacing: -1px;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-.ste-about-stat-label {
-    display: block;
-    margin-top: 6px;
-    font-size: 14px;
-    color: #777;
-    font-weight: 500;
-}
-@media (max-width: 768px) {
-    .ste-about-stats { grid-template-columns: repeat(2, 1fr); }
-    .ste-about-hero { padding: 120px 0 40px; }
-}
-</style>
-
 <?php get_footer(); ?>

@@ -56,45 +56,4 @@ endwhile;
     </div>
 </section>
 
-<style>
-.ste-landing-hero {
-    padding: 140px 0 80px;
-    background: linear-gradient(135deg, #f8f7ff 0%, #eef2ff 50%, #f0f9ff 100%);
-}
-.ste-landing-hero-inner {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 60px;
-    align-items: center;
-}
-.ste-landing-title {
-    font-size: clamp(32px, 5vw, 52px);
-    font-weight: 900;
-    letter-spacing: -1px;
-    line-height: 1.1;
-    margin-bottom: 20px;
-    background: linear-gradient(135deg, #1a1a2e, #6366f1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-.ste-landing-subtitle {
-    font-size: 18px;
-    color: #666;
-    line-height: 1.7;
-    margin-bottom: 32px;
-}
-.ste-landing-actions { display: flex; gap: 14px; flex-wrap: wrap; }
-.ste-landing-hero-img img {
-    width: 100%;
-    height: auto;
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(99,102,241,.15);
-}
-@media (max-width: 768px) {
-    .ste-landing-hero-inner { grid-template-columns: 1fr; text-align: center; }
-    .ste-landing-actions { justify-content: center; }
-    .ste-landing-hero { padding: 120px 0 60px; }
-}
-</style>
-
 <?php get_footer(); ?>

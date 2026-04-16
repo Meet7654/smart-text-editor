@@ -130,18 +130,18 @@ if ( $return_order_id ) {
                         <a href="<?php echo esc_url( home_url( '/checkout/?plan=' . $plan_key . '&billing=monthly' ) ); ?>"
                            class="ste-billing-opt <?php echo ! $is_yearly ? 'active' : ''; ?>">Monthly</a>
                         <a href="<?php echo esc_url( home_url( '/checkout/?plan=' . $plan_key . '&billing=yearly' ) ); ?>"
-                           class="ste-billing-opt <?php echo $is_yearly ? 'active' : ''; ?>">Yearly <small>Save 17%</small></a>
+                           class="ste-billing-opt <?php echo esc_attr( $is_yearly ? 'active' : '' ); ?>">Yearly <small>Save 17%</small></a>
                     </div>
 
                     <!-- Plan switcher -->
                     <div class="ste-plan-switcher">
                         <a href="<?php echo esc_url( home_url( '/checkout/?plan=pro&billing=' . $billing ) ); ?>"
                            class="ste-plan-switch <?php echo 'pro' === $plan_key ? 'active' : ''; ?>">
-                            Pro — <?php echo $is_yearly ? '₹4,490/yr' : '₹449/mo'; ?>
+                            Pro — <?php echo $is_yearly ? esc_html( '₹4,490/yr' ) : esc_html( '₹449/mo' ); ?>
                         </a>
                         <a href="<?php echo esc_url( home_url( '/checkout/?plan=business&billing=' . $billing ) ); ?>"
                            class="ste-plan-switch <?php echo 'business' === $plan_key ? 'active' : ''; ?>">
-                            Business — <?php echo $is_yearly ? '₹11,990/yr' : '₹1,199/mo'; ?>
+                            Business — <?php echo $is_yearly ? esc_html( '₹11,990/yr' ) : esc_html( '₹1,199/mo' ); ?>
                         </a>
                     </div>
 
@@ -218,7 +218,7 @@ if ( $return_order_id ) {
                 </div>
                 <div>
                     <strong>Smart Text Editor — <?php echo esc_html( $plan['label'] ); ?></strong>
-                    <span><?php echo $is_yearly ? 'Yearly' : 'Monthly'; ?> subscription</span>
+                    <span><?php echo esc_html( $is_yearly ? 'Yearly' : 'Monthly' ); ?> subscription</span>
                 </div>
             </div>
 

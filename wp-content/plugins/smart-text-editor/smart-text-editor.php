@@ -20,6 +20,7 @@ define( 'STE_VERSION', '1.3.0' );
 define( 'STE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'STE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'STE_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+define( 'STE_GOOGLE_FONTS_URL', 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700;900&family=Montserrat:wght@300;400;500;600;700;800;900&family=Open+Sans:wght@300;400;500;600;700;800&family=Lato:wght@300;400;700;900&family=Oswald:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700;800;900&family=Dancing+Script:wght@400;500;600;700&family=Pacifico&family=Lobster&family=Caveat:wght@400;500;600;700&family=Satisfy&family=Great+Vibes&family=Sacramento&family=Permanent+Marker&family=Abril+Fatface&family=Bebas+Neue&family=Righteous&family=Russo+One&family=Orbitron:wght@400;500;600;700;800;900&family=Press+Start+2P&family=Fira+Code:wght@300;400;500;600;700&family=Source+Code+Pro:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700;900&family=Crimson+Text:wght@400;600;700&family=Libre+Baskerville:wght@400;700&family=Spectral:wght@300;400;500;600;700;800&family=Comfortaa:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700;800;900&family=Work+Sans:wght@300;400;500;600;700;800;900&family=Josefin+Sans:wght@300;400;500;600;700&family=Barlow:wght@300;400;500;600;700;800;900&family=Rubik:wght@300;400;500;600;700;800;900&family=Archivo+Black&family=Anton&family=Titan+One&family=Bangers&family=Bungee&display=swap' );
 
 /* ── Required dependency: FluentSMTP ── */
 function ste_check_fluentsmtp() {
@@ -81,14 +82,12 @@ function ste_init() {
     require_once STE_PLUGIN_DIR . 'includes/class-ste-license.php';
     require_once STE_PLUGIN_DIR . 'includes/class-ste-admin.php';
     require_once STE_PLUGIN_DIR . 'includes/class-ste-editor.php';
-    require_once STE_PLUGIN_DIR . 'includes/class-ste-ajax.php';
     require_once STE_PLUGIN_DIR . 'includes/class-ste-shortcode.php';
     require_once STE_PLUGIN_DIR . 'includes/class-ste-checkout.php';
 
     STE_License::init();
     STE_Admin::init();
     STE_Editor::init();
-    STE_Ajax::init();
     STE_Shortcode::init();
     STE_Checkout::init();
 
@@ -99,13 +98,10 @@ function ste_init() {
 }
 add_action( 'plugins_loaded', 'ste_init' );
 
-/* ── Soft-block purchases (not plugin load) if FluentSMTP missing ── */
-function ste_init_checkout_guard() {
-    if ( ! ste_check_fluentsmtp() ) return;
-
-    // FluentSMTP is active — purchases are allowed
-}
-add_action( 'plugins_loaded', 'ste_init_checkout_guard' );
+/* ── Soft-block purchases (not plugin load) if FluentSMTP missing ──
+ * The actual block happens inside ajax_create_cf_order() and the checkout
+ * template via STE_Checkout::is_smtp_configured() checks.
+ */
 
 /* Activation */
 function ste_activate() {

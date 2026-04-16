@@ -11,10 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) exit;
     <meta charset="<?php bloginfo( 'charset' ); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php wp_head(); ?>
-    <style>
-        body { margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #333; }
-        .ste-blank-content { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
-    </style>
 </head>
 <body <?php body_class( 'ste-blank-page' ); ?>>
 <?php wp_body_open(); ?>

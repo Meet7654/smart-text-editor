@@ -40,10 +40,7 @@ class STE_Editor {
         if ( ! $screen || ! in_array( $screen->post_type, self::$post_types, true ) ) return;
         wp_enqueue_media(); // For Insert Image
         wp_enqueue_style( 'dashicons' );
-        wp_enqueue_style( 'ste-google-fonts',
-            'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700;900&family=Montserrat:wght@300;400;500;600;700;800;900&family=Open+Sans:wght@300;400;500;600;700;800&family=Lato:wght@300;400;700;900&family=Oswald:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700;800;900&family=Dancing+Script:wght@400;500;600;700&family=Pacifico&family=Lobster&family=Caveat:wght@400;500;600;700&family=Satisfy&family=Great+Vibes&family=Sacramento&family=Permanent+Marker&family=Abril+Fatface&family=Bebas+Neue&family=Righteous&family=Russo+One&family=Orbitron:wght@400;500;600;700;800;900&family=Press+Start+2P&family=Fira+Code:wght@300;400;500;600;700&family=Source+Code+Pro:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700;900&family=Crimson+Text:wght@400;600;700&family=Libre+Baskerville:wght@400;700&family=Spectral:wght@300;400;500;600;700;800&family=Comfortaa:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700;800;900&family=Work+Sans:wght@300;400;500;600;700;800;900&family=Josefin+Sans:wght@300;400;500;600;700&family=Barlow:wght@300;400;500;600;700;800;900&family=Rubik:wght@300;400;500;600;700;800;900&family=Archivo+Black&family=Anton&family=Titan+One&family=Bangers&family=Bungee&display=swap',
-            array(), null
-        );
+        wp_enqueue_style( 'ste-google-fonts', STE_GOOGLE_FONTS_URL, array(), null );
         wp_enqueue_style( 'ste-editor', STE_PLUGIN_URL . 'assets/css/editor.css', array(), STE_VERSION );
         wp_enqueue_script( 'ste-editor', STE_PLUGIN_URL . 'assets/js/editor.js', array(), STE_VERSION, true );
         wp_localize_script( 'ste-editor', 'stePlan', STE_License::js_config() );
