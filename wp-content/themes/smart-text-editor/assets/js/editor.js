@@ -20,6 +20,59 @@
         var wordCount = document.getElementById('ste-live-wordcount');
         var charCount = document.getElementById('ste-live-charcount');
 
+        /* ── Pricing billing toggle (homepage) ── */
+        var pricingToggle = document.getElementById('ste-pricing-cycle-toggle');
+        if (pricingToggle && window.steTheme) {
+            pricingToggle.addEventListener('change', function () {
+                var yearly = this.checked;
+                document.querySelectorAll('.ste-hp-price-monthly, .ste-hp-period-monthly').forEach(function (el) { el.style.display = yearly ? 'none' : ''; });
+                document.querySelectorAll('.ste-hp-price-yearly, .ste-hp-period-yearly').forEach(function (el) { el.style.display = yearly ? '' : 'none'; });
+                document.querySelectorAll('.ste-pricing-yearly-info').forEach(function (el) { el.style.display = yearly ? 'block' : 'none'; });
+                document.querySelectorAll('.ste-hp-checkout-link').forEach(function (el) {
+                    var plan = el.getAttribute('data-plan');
+                    el.href = window.steTheme.checkoutUrl + '?plan=' + plan + '&billing=' + (yearly ? 'yearly' : 'monthly');
+                });
+                document.querySelectorAll('.ste-pricing-toggle-label').forEach(function (el) {
+                    el.classList.toggle('ste-toggle-active', (yearly && el.dataset.cycle === 'yearly') || (!yearly && el.dataset.cycle === 'monthly'));
+                });
+            });
+        }
+
+        /* ── Legal page TOC scroll-spy ── */
+        var tocLinks = document.querySelectorAll('.ste-legal-toc-inner nav a');
+        if (tocLinks.length) {
+            var sections = [];
+            tocLinks.forEach(function (a) {
+                var id = a.getAttribute('href').replace('#', '');
+                var el = document.getElementById(id);
+                if (el) sections.push({ el: el, a: a });
+            });
+            if (sections.length) {
+                var headerH = 96;
+                function onTocScroll() {
+                    var scrollY = window.scrollY || window.pageYOffset;
+                    var active = sections[0];
+                    for (var i = 0; i < sections.length; i++) {
+                        if (sections[i].el.getBoundingClientRect().top + scrollY - headerH - 20 <= scrollY) {
+                            active = sections[i];
+                        }
+                    }
+                    tocLinks.forEach(function (a) { a.classList.remove('ste-toc-active'); });
+                    active.a.classList.add('ste-toc-active');
+                    var toc = document.querySelector('.ste-legal-toc-inner nav');
+                    if (toc) {
+                        var aTop = active.a.offsetTop;
+                        var tocH = toc.clientHeight;
+                        if (aTop < toc.scrollTop || aTop > toc.scrollTop + tocH - 40) {
+                            toc.scrollTop = aTop - tocH / 2;
+                        }
+                    }
+                }
+                window.addEventListener('scroll', onTocScroll, { passive: true });
+                onTocScroll();
+            }
+        }
+
         if (!canvas) return;
 
         /* ── Toolbar commands ── */
@@ -305,59 +358,6 @@
             toastEl.textContent = msg;
             toastEl.classList.add('show');
             setTimeout(function () { toastEl.classList.remove('show'); }, 2000);
-        }
-
-        /* ── Pricing billing toggle (homepage) ── */
-        var pricingToggle = document.getElementById('ste-pricing-cycle-toggle');
-        if (pricingToggle && window.steTheme) {
-            pricingToggle.addEventListener('change', function () {
-                var yearly = this.checked;
-                document.querySelectorAll('.ste-hp-price-monthly, .ste-hp-period-monthly').forEach(function (el) { el.style.display = yearly ? 'none' : ''; });
-                document.querySelectorAll('.ste-hp-price-yearly, .ste-hp-period-yearly').forEach(function (el) { el.style.display = yearly ? '' : 'none'; });
-                document.querySelectorAll('.ste-pricing-yearly-info').forEach(function (el) { el.style.display = yearly ? 'block' : 'none'; });
-                document.querySelectorAll('.ste-hp-checkout-link').forEach(function (el) {
-                    var plan = el.getAttribute('data-plan');
-                    el.href = window.steTheme.checkoutUrl + '?plan=' + plan + '&billing=' + (yearly ? 'yearly' : 'monthly');
-                });
-                document.querySelectorAll('.ste-pricing-toggle-label').forEach(function (el) {
-                    el.classList.toggle('ste-toggle-active', (yearly && el.dataset.cycle === 'yearly') || (!yearly && el.dataset.cycle === 'monthly'));
-                });
-            });
-        }
-
-        /* ── Legal page TOC scroll-spy ── */
-        var tocLinks = document.querySelectorAll('.ste-legal-toc-inner nav a');
-        if (tocLinks.length) {
-            var sections = [];
-            tocLinks.forEach(function (a) {
-                var id = a.getAttribute('href').replace('#', '');
-                var el = document.getElementById(id);
-                if (el) sections.push({ el: el, a: a });
-            });
-            if (sections.length) {
-                var headerH = 96;
-                function onTocScroll() {
-                    var scrollY = window.scrollY || window.pageYOffset;
-                    var active = sections[0];
-                    for (var i = 0; i < sections.length; i++) {
-                        if (sections[i].el.getBoundingClientRect().top + scrollY - headerH - 20 <= scrollY) {
-                            active = sections[i];
-                        }
-                    }
-                    tocLinks.forEach(function (a) { a.classList.remove('ste-toc-active'); });
-                    active.a.classList.add('ste-toc-active');
-                    var toc = document.querySelector('.ste-legal-toc-inner nav');
-                    if (toc) {
-                        var aTop = active.a.offsetTop;
-                        var tocH = toc.clientHeight;
-                        if (aTop < toc.scrollTop || aTop > toc.scrollTop + tocH - 40) {
-                            toc.scrollTop = aTop - tocH / 2;
-                        }
-                    }
-                }
-                window.addEventListener('scroll', onTocScroll, { passive: true });
-                onTocScroll();
-            }
         }
 
         /* ── Keyboard shortcuts ── */

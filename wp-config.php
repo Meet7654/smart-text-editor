@@ -38,6 +38,9 @@ define( 'DB_CHARSET', 'utf8mb4' );
 define( 'DB_COLLATE', '' );
 
 define('FS_METHOD', 'direct');
+define( 'WP_FS__DEV_MODE', true );
+define( 'WP_FS__SKIP_EMAIL_ACTIVATION', true );
+define( 'WP_FS__smart-text-editor_SECRET_KEY', 'sk_GWAY8#q@fky~Mu8hB%Tyvy6bOP^U6' );
 /**#@+
  * Authentication unique keys and salts.
  *

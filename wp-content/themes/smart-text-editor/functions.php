@@ -24,7 +24,7 @@ add_action( 'wp_head', 'ste_theme_favicon' );
 
 /* ── Enqueue assets ── */
 function ste_enqueue_frontend_anim() {
-    if ( is_front_page() || is_home() || is_page_template( 'template-contact.php' ) || is_page_template( 'template-about.php' ) || is_page_template( 'template-landing.php' ) || is_page_template( 'template-privacy.php' ) || is_page_template( 'template-terms.php' ) ) {
+    if ( is_front_page() || is_home() || is_page_template( 'template-contact.php' ) || is_page_template( 'template-about.php' ) || is_page_template( 'template-landing.php' ) || is_page_template( 'template-privacy.php' ) || is_page_template( 'template-terms.php' ) || is_page_template( 'template-refund.php' ) ) {
         if ( defined( 'STE_PLUGIN_URL' ) && defined( 'STE_VERSION' ) ) {
             wp_enqueue_style( 'ste-front', STE_PLUGIN_URL . 'assets/css/frontend.css', array(), STE_VERSION );
             wp_enqueue_script( 'ste-front', STE_PLUGIN_URL . 'assets/js/frontend.js', array(), STE_VERSION, true );
@@ -54,6 +54,7 @@ function ste_theme_page_templates( $templates ) {
     $templates['template-about.php']     = __( 'About Page', 'smart-text-editor-theme' );
     $templates['template-blog.php']      = __( 'Blog / Posts', 'smart-text-editor-theme' );
     $templates['template-privacy.php']   = __( 'Privacy Policy', 'smart-text-editor-theme' );
+    $templates['template-refund.php']    = __( 'Refund & Cancellation Policy', 'smart-text-editor-theme' );
     $templates['template-terms.php']     = __( 'Terms & Conditions', 'smart-text-editor-theme' );
     return $templates;
 }

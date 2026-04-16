@@ -312,6 +312,7 @@ $admin_email = get_option( 'admin_email' );
                             Contact Us
                         </a>
                         <a href="<?php echo esc_url( home_url( '/terms/' ) ); ?>" class="ste-btn ste-btn-outline" style="margin-left:12px;">View Terms &amp; Conditions</a>
+                        <a href="<?php echo esc_url( home_url( '/refund-policy/' ) ); ?>" class="ste-btn ste-btn-outline" style="margin-left:12px;">Refund Policy</a>
                     </div>
                 </div>
 

@@ -142,3 +142,52 @@ function ste_action_links( $links ) {
     return $links;
 }
 add_filter( 'plugin_action_links_' . STE_PLUGIN_BASENAME, 'ste_action_links' );
+
+    if ( ! defined( 'WP_AWESOME__PLUGIN_DIR' ) ) {
+        define( 'WP_AWESOME__PLUGIN_DIR', dirname( __FILE__ ) );
+        define( 'WP_AWESOME__PLUGIN_URL', plugins_url( plugin_basename( WP_AWESOME__PLUGIN_DIR ) ) );
+    }
+
+    if ( ! function_exists( 'ste_fs' ) ) {
+        // Create a helper function for easy SDK access.
+        function ste_fs() {
+            global $ste_fs;
+
+            if ( ! isset( $ste_fs ) ) {
+                // Include Freemius SDK.
+                require_once dirname( __FILE__ ) . '/freemius/start.php';
+
+                $ste_fs = fs_dynamic_init( array(
+                    'id'                  => '27840',
+                    'slug'                => 'smart-text-editor',
+                    'type'                => 'plugin',
+                    'public_key'          => 'pk_f82147af697a5a83ac5106e050c06',
+                    'is_premium'          => true,
+                    // If your plugin is a serviceware, set this option to false.
+                    'has_premium_version' => true,
+                    'has_addons'          => false,
+                    'has_paid_plans'      => true,
+                    'is_org_compliant'    => true,
+                    // Automatically removed in the free version. If you're not using the
+                    // auto-generated free version, delete this line before uploading to wp.org.
+                    'wp_org_gatekeeper'   => 'OA7#BoRiBNqdf52FvzEf!!074aRLPs8fspif$7K1#4u4Csys1fQlCecVcUTOs2mcpeVHi#C2j9d09fOTvbC0HloPT7fFee5WdS3G',
+                    'trial'               => array(
+                        'days'               => 7,
+                        'is_require_payment' => false,
+                    ),
+                    'menu'                => array(
+                        'slug'           => 'smart-text-editor',
+                        'support'        => false,
+                    ),
+                ) );
+            }
+
+            return $ste_fs;
+        }
+
+        // Init Freemius.
+        ste_fs();
+        // Signal that SDK was initiated.
+        do_action( 'ste_fs_loaded' );
+    }
+?>

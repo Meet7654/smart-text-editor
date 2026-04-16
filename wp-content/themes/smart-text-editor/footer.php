@@ -37,12 +37,13 @@
             <div class="ste-footer-col">
                 <h4>Legal</h4>
                 <a href="<?php echo esc_url( home_url( '/privacy-policy/' ) ); ?>">Privacy Policy</a>
+                <a href="<?php echo esc_url( home_url( '/refund-policy/' ) ); ?>">Refund &amp; Cancellation</a>
                 <a href="<?php echo esc_url( home_url( '/terms/' ) ); ?>">Terms &amp; Conditions</a>
                 <a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>">Contact Us</a>
             </div>
         </div>
         <div class="ste-footer-bottom">
-            <p>&copy; <?php echo esc_html( date( 'Y' ) ); ?> Smart Text Editor. Created by Meet Patel. &nbsp;&middot;&nbsp; <a href="<?php echo esc_url( home_url( '/privacy-policy/' ) ); ?>" style="color:#777;">Privacy Policy</a> &nbsp;&middot;&nbsp; <a href="<?php echo esc_url( home_url( '/terms/' ) ); ?>" style="color:#777;">Terms &amp; Conditions</a></p>
+            <p>&copy; <?php echo esc_html( date( 'Y' ) ); ?> Smart Text Editor. Created by Meet Patel. &nbsp;&middot;&nbsp; <a href="<?php echo esc_url( home_url( '/privacy-policy/' ) ); ?>" style="color:#777;">Privacy Policy</a> &nbsp;&middot;&nbsp; <a href="<?php echo esc_url( home_url( '/refund-policy/' ) ); ?>" style="color:#777;">Refund Policy</a> &nbsp;&middot;&nbsp; <a href="<?php echo esc_url( home_url( '/terms/' ) ); ?>" style="color:#777;">Terms &amp; Conditions</a></p>
         </div>
     </div>
 </footer>
