@@ -8,6 +8,85 @@ class STE_Admin {
 
     public static function init() {
         add_action( 'admin_menu', array( __CLASS__, 'add_menu' ) );
+        add_action( 'admin_notices', array( __CLASS__, 'fluentsmtp_notice' ) );
+        add_action( 'admin_notices', array( __CLASS__, 'smtp_config_notice' ) );
+        add_filter( 'plugin_action_links_' . STE_PLUGIN_BASENAME, array( __CLASS__, 'action_links' ) );
+    }
+
+    /* ── FluentSMTP dependency notice ── */
+
+    public static function check_fluentsmtp() {
+        if ( ! function_exists( 'is_plugin_active' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+        return is_plugin_active( 'fluent-smtp/fluent-smtp.php' );
+    }
+
+    public static function fluentsmtp_notice() {
+        if ( self::check_fluentsmtp() ) return;
+
+        if ( file_exists( WP_PLUGIN_DIR . '/fluent-smtp/fluent-smtp.php' ) ) {
+            $btn_url   = wp_nonce_url(
+                admin_url( 'plugins.php?action=activate&plugin=fluent-smtp/fluent-smtp.php' ),
+                'activate-plugin_fluent-smtp/fluent-smtp.php'
+            );
+            $btn_label = __( 'Activate FluentSMTP', 'smart-text-editor' );
+        } else {
+            $btn_url   = wp_nonce_url(
+                admin_url( 'update.php?action=install-plugin&plugin=fluent-smtp' ),
+                'install-plugin_fluent-smtp'
+            );
+            $btn_label = __( 'Install FluentSMTP', 'smart-text-editor' );
+        }
+        ?>
+        <div class="notice notice-error" style="padding:14px 18px;border-left-color:#dc2626;">
+            <p style="font-size:14px;margin:0;">
+                <?php
+                printf(
+                    /* translators: 1: opening strong, 2: closing strong, 3: button HTML */
+                    wp_kses(
+                        __( '%1$sSmart Text Editor%2$s requires %1$sFluentSMTP%2$s to send emails (license keys, order confirmations, etc.). Please install and activate it. %3$s', 'smart-text-editor' ),
+                        array( 'strong' => array() )
+                    ),
+                    '<strong>',
+                    '</strong>',
+                    '<a href="' . esc_url( $btn_url ) . '" class="button button-primary" style="margin-left:12px;vertical-align:middle;">' . esc_html( $btn_label ) . '</a>'
+                );
+                ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    public static function smtp_config_notice() {
+        if ( ! self::check_fluentsmtp() ) return;
+        if ( ! class_exists( 'STE_Checkout' ) ) return;
+        if ( STE_Checkout::is_smtp_configured() ) return;
+        ?>
+        <div class="notice notice-warning" style="padding:12px 18px;border-left-color:#f59e0b;">
+            <p style="font-size:13px;margin:0;">
+                <?php
+                printf(
+                    /* translators: 1: opening strong, 2: closing strong, 3: settings link */
+                    wp_kses(
+                        __( '%1$sSmart Text Editor:%2$s FluentSMTP is active but no sender email is configured. Purchases are blocked until email delivery is set up. %3$s', 'smart-text-editor' ),
+                        array( 'strong' => array() )
+                    ),
+                    '<strong>',
+                    '</strong>',
+                    '<a href="' . esc_url( admin_url( 'options-general.php?page=fluent-mail#/' ) ) . '" style="margin-left:6px;">' . esc_html__( 'Configure FluentSMTP &rarr;', 'smart-text-editor' ) . '</a>'
+                );
+                ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    /* ── Plugin action link ── */
+
+    public static function action_links( $links ) {
+        array_unshift( $links, '<a href="' . esc_url( admin_url( 'post-new.php?post_type=page' ) ) . '">' . esc_html__( 'Create Page', 'smart-text-editor' ) . '</a>' );
+        return $links;
     }
 
     public static function add_menu() {

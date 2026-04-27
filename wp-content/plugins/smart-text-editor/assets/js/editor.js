@@ -119,6 +119,12 @@
     });
 
     /* ━━━ Helpers ━━━ */
+    /**
+     * @deprecated document.execCommand() is deprecated in all major browsers
+     * and will eventually be removed. This wrapper centralises all usages so
+     * they can be migrated to the Selection/Range API in a future rewrite.
+     * Tracked: https://developer.mozilla.org/en-US/docs/Web/API/Document/execCommand
+     */
     function exec(cmd, v) { document.execCommand(cmd, false, v || null); editor.focus(); }
     function val(id) { var e = document.getElementById(id); return e ? e.value : ''; }
     function num(id) { return parseFloat(val(id)) || 0; }
@@ -460,26 +466,69 @@
         /* Build a custom link modal once */
         var modal = document.getElementById('ste-link-modal');
         if ( !modal ) {
+            // Build entirely with DOM API — no innerHTML with any dynamic data.
             modal = document.createElement('div');
             modal.id = 'ste-link-modal';
             modal.className = 'ste-modal ste-hidden';
-            modal.innerHTML =
-                '<div class="ste-modal-box" style="width:400px;">'
-                + '<div class="ste-modal-head"><h3>Insert Link</h3><button type="button" class="ste-modal-x">&times;</button></div>'
-                + '<div style="padding:20px;">'
-                + '<label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">URL</label>'
-                + '<input type="url" id="ste-link-url" placeholder="https://" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">'
-                + '<div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">'
-                + '<button type="button" id="ste-link-cancel" style="padding:7px 18px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;">Cancel</button>'
-                + '<button type="button" id="ste-link-insert" style="padding:7px 18px;border:none;border-radius:6px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Insert</button>'
-                + '</div></div></div>';
+
+            var box = document.createElement('div');
+            box.className = 'ste-modal-box';
+            box.style.width = '400px';
+
+            var head = document.createElement('div');
+            head.className = 'ste-modal-head';
+            var headTitle = document.createElement('h3');
+            headTitle.textContent = 'Insert Link';
+            var closeBtn = document.createElement('button');
+            closeBtn.type = 'button';
+            closeBtn.className = 'ste-modal-x';
+            closeBtn.textContent = '\u00D7';
+            head.appendChild(headTitle);
+            head.appendChild(closeBtn);
+
+            var body = document.createElement('div');
+            body.style.padding = '20px';
+
+            var lbl = document.createElement('label');
+            lbl.textContent = 'URL';
+            lbl.style.cssText = 'display:block;font-size:13px;font-weight:600;margin-bottom:6px;';
+
+            var urlInput = document.createElement('input');
+            urlInput.type = 'url';
+            urlInput.id = 'ste-link-url';
+            urlInput.placeholder = 'https://';
+            urlInput.style.cssText = 'width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;';
+
+            var actions = document.createElement('div');
+            actions.style.cssText = 'display:flex;gap:10px;margin-top:16px;justify-content:flex-end;';
+
+            var cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.id = 'ste-link-cancel';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.style.cssText = 'padding:7px 18px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;';
+
+            var insertBtn = document.createElement('button');
+            insertBtn.type = 'button';
+            insertBtn.id = 'ste-link-insert';
+            insertBtn.textContent = 'Insert';
+            insertBtn.style.cssText = 'padding:7px 18px;border:none;border-radius:6px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;cursor:pointer;font-size:13px;font-weight:600;';
+
+            actions.appendChild(cancelBtn);
+            actions.appendChild(insertBtn);
+            body.appendChild(lbl);
+            body.appendChild(urlInput);
+            body.appendChild(actions);
+            box.appendChild(head);
+            box.appendChild(body);
+            modal.appendChild(box);
             document.body.appendChild(modal);
 
-            modal.querySelector('.ste-modal-x').addEventListener('click', function () { closeModal('ste-link-modal'); });
+            closeBtn.addEventListener('click', function () { closeModal('ste-link-modal'); });
             modal.addEventListener('click', function (e) { if (e.target === modal) closeModal('ste-link-modal'); });
-            document.getElementById('ste-link-cancel').addEventListener('click', function () { closeModal('ste-link-modal'); });
-            document.getElementById('ste-link-insert').addEventListener('click', insertLink);
-            document.getElementById('ste-link-url').addEventListener('keydown', function (e) {
+            cancelBtn.addEventListener('click', function () { closeModal('ste-link-modal'); });
+            insertBtn.addEventListener('click', insertLink);
+            urlInput.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') { e.preventDefault(); insertLink(); }
             });
         }
@@ -1371,11 +1420,22 @@
             var msg   = document.getElementById('ste-upgrade-msg');
             if (!modal) return;
             var label = featureLabels[featureKey] || featureKey;
+            // Build the message with DOM nodes so label is always text — never HTML.
+            msg.textContent = '';
+            var strong1 = document.createElement('strong');
+            strong1.textContent = label;
+            msg.appendChild(strong1);
             if (cfg.isTrial) {
-                msg.innerHTML = '<strong>' + escHtml(label) + '</strong> is not available during the free trial. Purchase a <strong>Pro</strong> or <strong>Business</strong> plan to unlock this feature.';
+                msg.appendChild(document.createTextNode(' is not available during the free trial. Purchase a '));
+                var s2 = document.createElement('strong'); s2.textContent = 'Pro'; msg.appendChild(s2);
+                msg.appendChild(document.createTextNode(' or '));
+                var s3 = document.createElement('strong'); s3.textContent = 'Business'; msg.appendChild(s3);
+                msg.appendChild(document.createTextNode(' plan to unlock this feature.'));
             } else {
                 var minPlan = (featureKey === 'customPresets') ? 'Business' : 'Pro';
-                msg.innerHTML = '<strong>' + escHtml(label) + '</strong> is available on the <strong>' + minPlan + '</strong> plan and above.';
+                msg.appendChild(document.createTextNode(' is available on the '));
+                var s4 = document.createElement('strong'); s4.textContent = minPlan; msg.appendChild(s4);
+                msg.appendChild(document.createTextNode(' plan and above.'));
             }
             modal.classList.remove('ste-hidden');
         }

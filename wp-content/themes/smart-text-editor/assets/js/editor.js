@@ -178,11 +178,13 @@
         }
 
         function bindFxEvents(type) {
-            // Range value displays
+            // Range value displays — find the <span class="ste-fx-val"> by id pattern
             fxContent.querySelectorAll('input[type="range"]').forEach(function (r) {
                 r.addEventListener('input', function () {
-                    var label = this.previousElementSibling;
-                    if (label) label.textContent = this.value;
+                    var valSpan = fxContent.querySelector('#' + this.id.replace('fx-', 'fx-') + '-val');
+                    // Fallback: find span with matching id convention (e.g. fx-angle → fx-angle-val)
+                    if (!valSpan) valSpan = fxContent.querySelector('[id$="-val"][id^="' + this.id + '"]');
+                    if (valSpan) valSpan.textContent = this.value;
                 });
             });
 

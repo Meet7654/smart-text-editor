@@ -113,6 +113,21 @@ class STE_License {
         add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_assets' ) );
     }
 
+    /**
+     * Class-level plan cache — null means uncached.
+     * Using a static property (not a static local variable) allows it to be
+     * explicitly reset after activation/deactivation within the same request.
+     */
+    private static $_plan_cache = null;
+
+    /**
+     * Invalidate the plan cache. Call this any time the active plan changes
+     * mid-request (e.g. after handle_activate or handle_deactivate).
+     */
+    public static function reset_plan_cache() {
+        self::$_plan_cache = null;
+    }
+
     /* ── Getters ── */
 
     public static function get_plan() {
@@ -120,29 +135,29 @@ class STE_License {
         if ( ! isset( self::$plans[ $plan ] ) ) return 'free';
 
         // For paid plans, verify license key still exists and hasn't expired.
-        // Use a static cache so this only runs once per request, not on every call.
+        // Cache the result in a static property so validation only runs once
+        // per request, but the cache can be reset after plan changes.
         if ( 'free' !== $plan ) {
-            static $plan_cache = null;
-            if ( null !== $plan_cache ) return $plan_cache;
+            if ( null !== self::$_plan_cache ) return self::$_plan_cache;
 
             $key = get_option( 'ste_license_key', '' );
             if ( empty( $key ) || ! self::validate_key( $key, $plan ) ) {
                 update_option( 'ste_active_plan', 'free' );
-                $plan_cache = 'free';
+                self::$_plan_cache = 'free';
                 return 'free';
             }
             // Check expiration
             $expires = get_option( 'ste_license_expires', '' );
-            if ( $expires && current_time( 'timestamp' ) > strtotime( $expires ) ) {
+            if ( $expires && time() > strtotime( $expires ) ) {
                 update_option( 'ste_active_plan', 'free' );
                 delete_option( 'ste_license_key' );
                 delete_option( 'ste_license_activated' );
                 delete_option( 'ste_license_expires' );
                 delete_option( 'ste_billing_cycle' );
-                $plan_cache = 'free';
+                self::$_plan_cache = 'free';
                 return 'free';
             }
-            $plan_cache = $plan;
+            self::$_plan_cache = $plan;
         }
 
         // If still on free, check for active trial
@@ -158,7 +173,7 @@ class STE_License {
     public static function is_trial_active() {
         $trial_expires = get_option( 'ste_trial_expires', '' );
         if ( empty( $trial_expires ) ) return false;
-        return current_time( 'timestamp' ) < strtotime( $trial_expires );
+        return time() < strtotime( $trial_expires );
     }
 
     public static function is_trial_used() {
@@ -310,15 +325,17 @@ class STE_License {
 
         update_option( 'ste_active_plan', $plan );
         update_option( 'ste_license_key', $key );
-        update_option( 'ste_license_activated', current_time( 'mysql' ) );
+        update_option( 'ste_license_activated', gmdate( 'Y-m-d H:i:s' ) );
 
-        // Fetch expiry from the purchase order
+        // Fetch expiry and billing cycle from the purchase order in one query
         $expires_at    = '';
         $billing_cycle = 'monthly';
         if ( class_exists( 'STE_Checkout' ) ) {
-            $expires_at    = STE_Checkout::get_expiry_by_license_key( $key );
-            $billing_cycle = STE_Checkout::get_billing_cycle_by_license_key( $key );
-            if ( ! $billing_cycle ) $billing_cycle = 'monthly';
+            $order_data = STE_Checkout::get_order_data_by_license_key( $key );
+            if ( $order_data ) {
+                $expires_at    = $order_data->expires_at    ?: '';
+                $billing_cycle = $order_data->billing_cycle ?: 'monthly';
+            }
         }
         // Fallback if no order found
         if ( empty( $expires_at ) ) {
@@ -327,6 +344,7 @@ class STE_License {
         }
         update_option( 'ste_license_expires', $expires_at );
         update_option( 'ste_billing_cycle', $billing_cycle );
+        self::reset_plan_cache();
 
         wp_safe_redirect( add_query_arg( 'ste_msg', 'activated', admin_url( 'admin.php?page=ste-license' ) ) );
         exit;
@@ -343,6 +361,7 @@ class STE_License {
         delete_option( 'ste_license_expires' );
         delete_option( 'ste_billing_cycle' );
         update_option( 'ste_active_plan', 'free' );
+        self::reset_plan_cache();
 
         wp_safe_redirect( add_query_arg( 'ste_msg', 'deactivated', admin_url( 'admin.php?page=ste-license' ) ) );
         exit;
@@ -361,7 +380,7 @@ class STE_License {
 
         $trial_expires = gmdate( 'Y-m-d H:i:s', strtotime( '+7 days' ) );
         update_option( 'ste_trial_used', true );
-        update_option( 'ste_trial_started', current_time( 'mysql' ) );
+        update_option( 'ste_trial_started', gmdate( 'Y-m-d H:i:s' ) );
         update_option( 'ste_trial_expires', $trial_expires );
 
         wp_safe_redirect( add_query_arg( 'ste_msg', 'trial_started', admin_url( 'admin.php?page=ste-license' ) ) );
@@ -373,6 +392,14 @@ class STE_License {
     public static function enqueue_admin_assets( $hook ) {
         if ( 'smart-editor_page_ste-license' !== $hook ) return;
         wp_enqueue_style( 'ste-license-admin', STE_PLUGIN_URL . 'assets/css/license-admin.css', array(), STE_VERSION );
+        wp_enqueue_script( 'ste-license-admin', STE_PLUGIN_URL . 'assets/js/license-admin.js', array(), STE_VERSION, true );
+        wp_localize_script( 'ste-license-admin', 'steAdminLicense', array(
+            'checkoutUrl'   => home_url( '/checkout/' ),
+            'msgDowngrade'  => __( 'This will deactivate your license and downgrade to the Free plan. Continue?', 'smart-text-editor' ),
+            'msgDeactivate' => __( 'This will deactivate your license and revert to the Free plan. Continue?', 'smart-text-editor' ),
+            'labelCancel'   => __( 'Cancel', 'smart-text-editor' ),
+            'labelConfirm'  => __( 'Confirm', 'smart-text-editor' ),
+        ) );
     }
 
     /* ── Submenu ── */
@@ -398,7 +425,9 @@ class STE_License {
         $activated_at = get_option( 'ste_license_activated', '' );
         $expires_at    = get_option( 'ste_license_expires', '' );
         $billing_cycle = get_option( 'ste_billing_cycle', 'monthly' );
-        $msg           = isset( $_GET['ste_msg'] ) ? sanitize_text_field( wp_unslash( $_GET['ste_msg'] ) ) : '';
+        $msg = ( current_user_can( 'manage_options' ) && isset( $_GET['ste_msg'] ) )
+            ? sanitize_text_field( wp_unslash( $_GET['ste_msg'] ) )
+            : '';
         ?>
         <div class="wrap ste-license-wrap">
             <h1><?php esc_html_e( 'Smart Text Editor — Plan & License', 'smart-text-editor' ); ?></h1>
@@ -446,22 +475,22 @@ class STE_License {
                         </div>
                         <?php
                         $trial_started = get_option( 'ste_trial_started', '' );
-                        $trial_diff    = strtotime( $trial_exp ) - current_time( 'timestamp' );
+                        $trial_diff    = strtotime( $trial_exp ) - time();
                         $trial_days    = max( 0, intval( $trial_diff / DAY_IN_SECONDS ) );
                         $trial_hours   = max( 0, intval( ( $trial_diff % DAY_IN_SECONDS ) / HOUR_IN_SECONDS ) );
                         $trial_total   = $trial_started ? strtotime( $trial_exp ) - strtotime( $trial_started ) : 1;
-                        $trial_elapsed = $trial_started ? current_time( 'timestamp' ) - strtotime( $trial_started ) : 0;
+                        $trial_elapsed = $trial_started ? time() - strtotime( $trial_started ) : 0;
                         $trial_pct     = $trial_total > 0 ? min( 100, max( 0, 100 - ( $trial_elapsed / $trial_total ) * 100 ) ) : 0;
                         $trial_warning = $trial_days <= 2;
                         ?>
                         <div class="ste-license-validity">
                             <div class="ste-validity-row">
                                 <span class="ste-validity-label">Trial Started</span>
-                                <span class="ste-validity-value"><?php echo esc_html( $trial_started ? date_i18n( get_option( 'date_format' ), strtotime( $trial_started ) ) : 'N/A' ); ?></span>
+                                <span class="ste-validity-value"><?php echo esc_html( $trial_started ? wp_date( get_option( 'date_format' ), strtotime( $trial_started ) ) : 'N/A' ); ?></span>
                             </div>
                             <div class="ste-validity-row">
                                 <span class="ste-validity-label">Trial Expires</span>
-                                <span class="ste-validity-value"><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $trial_exp ) ) ); ?></span>
+                                <span class="ste-validity-value"><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $trial_exp ) ) ); ?></span>
                             </div>
                             <div class="ste-validity-row">
                                 <span class="ste-validity-label">Time Remaining</span>
@@ -485,7 +514,7 @@ class STE_License {
                         </div>
 
                     <?php elseif ( 'free' !== $current && $license_key ) :
-                        $days_remaining = $expires_at ? max( 0, intval( ( strtotime( $expires_at ) - current_time( 'timestamp' ) ) / DAY_IN_SECONDS ) ) : 0;
+                        $days_remaining = $expires_at ? max( 0, intval( ( strtotime( $expires_at ) - time() ) / DAY_IN_SECONDS ) ) : 0;
                         $is_expiring_soon = $days_remaining <= 7 && $days_remaining > 0;
                     ?>
                         <div class="ste-license-plan-badge ste-badge-<?php echo esc_attr( $current ); ?>">
@@ -493,20 +522,20 @@ class STE_License {
                         </div>
                         <div class="ste-license-key-info">
                             <span class="ste-license-key-display"><?php echo esc_html( substr( $license_key, 0, 12 ) . '****-****' ); ?></span>
-                            <span class="ste-license-date">Activated: <?php echo esc_html( $activated_at ? date_i18n( get_option( 'date_format' ), strtotime( $activated_at ) ) : 'N/A' ); ?></span>
+                            <span class="ste-license-date">Activated: <?php echo esc_html( $activated_at ? wp_date( get_option( 'date_format' ), strtotime( $activated_at ) ) : 'N/A' ); ?></span>
                             <span class="ste-license-cycle-badge"><?php echo esc_html( ucfirst( $billing_cycle ) ); ?></span>
                         </div>
                         <div class="ste-license-validity">
                             <div class="ste-validity-row">
                                 <span class="ste-validity-label">Expires On</span>
-                                <span class="ste-validity-value"><?php echo esc_html( $expires_at ? date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $expires_at ) ) : 'N/A' ); ?></span>
+                                <span class="ste-validity-value"><?php echo esc_html( $expires_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $expires_at ) ) : 'N/A' ); ?></span>
                             </div>
                             <div class="ste-validity-row">
                                 <span class="ste-validity-label">Time Remaining</span>
                                 <span class="ste-validity-value <?php echo esc_attr( $is_expiring_soon ? 'ste-validity-warning' : 'ste-validity-ok' ); ?>">
                                     <?php
                                     if ( $expires_at ) {
-                                        $diff = strtotime( $expires_at ) - current_time( 'timestamp' );
+                                        $diff = strtotime( $expires_at ) - time();
                                         if ( $diff <= 0 ) {
                                             echo 'Expired';
                                         } else {
@@ -527,7 +556,7 @@ class STE_License {
                             <div class="ste-validity-bar-wrap">
                                 <?php
                                 $total_seconds = $activated_at && $expires_at ? strtotime( $expires_at ) - strtotime( $activated_at ) : 1;
-                                $elapsed       = $activated_at ? current_time( 'timestamp' ) - strtotime( $activated_at ) : 0;
+                                $elapsed       = $activated_at ? time() - strtotime( $activated_at ) : 0;
                                 $percent_used  = $total_seconds > 0 ? min( 100, max( 0, ( $elapsed / $total_seconds ) * 100 ) ) : 0;
                                 $percent_left  = 100 - $percent_used;
                                 ?>
@@ -681,59 +710,6 @@ class STE_License {
                 <?php endif; ?>
             </div>
         </div>
-        <script>
-        (function(){
-            var toggle = document.getElementById('ste-billing-toggle');
-            if (!toggle) return;
-            var homeUrl = <?php echo wp_json_encode( home_url( '/checkout/' ) ); ?>;
-
-            function update(yearly) {
-                document.querySelectorAll('.ste-price-monthly, .ste-period-monthly, .ste-purchase-price-monthly').forEach(function(el){ el.style.display = yearly ? 'none' : ''; });
-                document.querySelectorAll('.ste-price-yearly, .ste-period-yearly, .ste-purchase-price-yearly').forEach(function(el){ el.style.display = yearly ? '' : 'none'; });
-                document.querySelectorAll('.ste-plan-yearly-equiv').forEach(function(el){ el.style.display = yearly ? 'block' : 'none'; });
-                document.querySelectorAll('.ste-purchase-link').forEach(function(el){
-                    var plan = el.getAttribute('data-plan');
-                    var href = homeUrl + '?plan=' + plan + '&billing=' + (yearly ? 'yearly' : 'monthly');
-                    el.setAttribute('href', href);
-                });
-                document.querySelectorAll('.ste-plan-btn-upgrade.ste-purchase-link').forEach(function(el){
-                    var span = el.querySelector('.ste-btn-price-text');
-                    if (span) {
-                        span.textContent = yearly ? el.getAttribute('data-price-yearly') : el.getAttribute('data-price-monthly');
-                    }
-                });
-                document.querySelectorAll('.ste-billing-label').forEach(function(el){
-                    el.classList.toggle('active', (yearly && el.dataset.cycle === 'yearly') || (!yearly && el.dataset.cycle === 'monthly'));
-                });
-            }
-
-            toggle.addEventListener('change', function(){ update(this.checked); });
-            update(false);
-
-            /* Confirmation dialogs for destructive actions */
-            ['ste-btn-downgrade', 'ste-btn-deactivate'].forEach(function(id) {
-                var btn = document.getElementById(id);
-                if (!btn) return;
-                btn.addEventListener('click', function(e) {
-                    var msg = id === 'ste-btn-downgrade'
-                        ? 'This will deactivate your license and downgrade to the Free plan. Continue?'
-                        : 'This will deactivate your license and revert to the Free plan. Continue?';
-                    var modal = document.createElement('div');
-                    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;';
-                    modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:400px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.2);font-family:inherit;">'
-                        + '<p style="font-size:15px;color:#333;margin:0 0 20px;line-height:1.6;">' + msg + '</p>'
-                        + '<div style="display:flex;gap:10px;justify-content:flex-end;">'
-                        + '<button id="ste-confirm-cancel" style="padding:8px 18px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;">Cancel</button>'
-                        + '<button id="ste-confirm-ok" style="padding:8px 18px;border:none;border-radius:6px;background:#dc2626;color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Confirm</button>'
-                        + '</div></div>';
-                    document.body.appendChild(modal);
-                    e.preventDefault();
-                    document.getElementById('ste-confirm-cancel').onclick = function() { modal.remove(); };
-                    document.getElementById('ste-confirm-ok').onclick = function() { modal.remove(); btn.closest('form').submit(); };
-                });
-            });
-        })();
-        </script>
         <?php
     }
 }

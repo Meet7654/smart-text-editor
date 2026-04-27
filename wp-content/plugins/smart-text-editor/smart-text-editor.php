@@ -22,61 +22,10 @@ define( 'STE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'STE_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'STE_GOOGLE_FONTS_URL', 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700;900&family=Montserrat:wght@300;400;500;600;700;800;900&family=Open+Sans:wght@300;400;500;600;700;800&family=Lato:wght@300;400;700;900&family=Oswald:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700;800;900&family=Dancing+Script:wght@400;500;600;700&family=Pacifico&family=Lobster&family=Caveat:wght@400;500;600;700&family=Satisfy&family=Great+Vibes&family=Sacramento&family=Permanent+Marker&family=Abril+Fatface&family=Bebas+Neue&family=Righteous&family=Russo+One&family=Orbitron:wght@400;500;600;700;800;900&family=Press+Start+2P&family=Fira+Code:wght@300;400;500;600;700&family=Source+Code+Pro:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700;900&family=Crimson+Text:wght@400;600;700&family=Libre+Baskerville:wght@400;700&family=Spectral:wght@300;400;500;600;700;800&family=Comfortaa:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700;800;900&family=Work+Sans:wght@300;400;500;600;700;800;900&family=Josefin+Sans:wght@300;400;500;600;700&family=Barlow:wght@300;400;500;600;700;800;900&family=Rubik:wght@300;400;500;600;700;800;900&family=Archivo+Black&family=Anton&family=Titan+One&family=Bangers&family=Bungee&display=swap' );
 
-/* ── Required dependency: FluentSMTP ── */
-function ste_check_fluentsmtp() {
-    if ( ! function_exists( 'is_plugin_active' ) ) {
-        require_once ABSPATH . 'wp-admin/includes/plugin.php';
-    }
-    return is_plugin_active( 'fluent-smtp/fluent-smtp.php' );
-}
+/* ── Required dependency notices and plugin action link are
+ * handled by STE_Admin::init() once the class is loaded.
+ * ── */
 
-function ste_fluentsmtp_notice() {
-    if ( ste_check_fluentsmtp() ) return;
-
-    $install_url  = '';
-    $action_label = '';
-
-    if ( file_exists( WP_PLUGIN_DIR . '/fluent-smtp/fluent-smtp.php' ) ) {
-        // Installed but not activated
-        $activate_url = wp_nonce_url(
-            admin_url( 'plugins.php?action=activate&plugin=fluent-smtp/fluent-smtp.php' ),
-            'activate-plugin_fluent-smtp/fluent-smtp.php'
-        );
-        $action_label = '<a href="' . esc_url( $activate_url ) . '" class="button button-primary" style="margin-left:12px;vertical-align:middle;">Activate FluentSMTP</a>';
-    } else {
-        // Not installed
-        $install_url = wp_nonce_url(
-            admin_url( 'update.php?action=install-plugin&plugin=fluent-smtp' ),
-            'install-plugin_fluent-smtp'
-        );
-        $action_label = '<a href="' . esc_url( $install_url ) . '" class="button button-primary" style="margin-left:12px;vertical-align:middle;">Install FluentSMTP</a>';
-    }
-
-    echo '<div class="notice notice-error" style="padding:14px 18px;border-left-color:#dc2626;">
-        <p style="font-size:14px;margin:0;">
-            <strong>Smart Text Editor</strong> requires the <strong>FluentSMTP</strong> plugin to send emails (license keys, order confirmations, etc.). Please install and activate it to use Smart Text Editor.
-            ' . $action_label . '
-        </p>
-    </div>';
-}
-add_action( 'admin_notices', 'ste_fluentsmtp_notice' );
-
-/* ── SMTP configuration notice ── */
-function ste_smtp_config_notice() {
-    if ( ! ste_check_fluentsmtp() ) return; // FluentSMTP notice already shown
-    if ( ! class_exists( 'STE_Checkout' ) ) return;
-    if ( STE_Checkout::is_smtp_configured() ) return;
-
-    echo '<div class="notice notice-warning" style="padding:12px 18px;border-left-color:#f59e0b;">
-        <p style="font-size:13px;margin:0;">
-            <strong>Smart Text Editor:</strong> FluentSMTP is active but no sender email is configured. Purchases are blocked until email delivery is set up.
-            <a href="' . esc_url( admin_url( 'options-general.php?page=fluent-mail#/' ) ) . '" style="margin-left:6px;">Configure FluentSMTP &rarr;</a>
-        </p>
-    </div>';
-}
-add_action( 'admin_notices', 'ste_smtp_config_notice' );
-
-/* ── Stop loading if FluentSMTP is not active ── */
 function ste_init() {
     // Load editor & core features regardless of FluentSMTP
     require_once STE_PLUGIN_DIR . 'includes/class-ste-license.php';
@@ -84,12 +33,14 @@ function ste_init() {
     require_once STE_PLUGIN_DIR . 'includes/class-ste-editor.php';
     require_once STE_PLUGIN_DIR . 'includes/class-ste-shortcode.php';
     require_once STE_PLUGIN_DIR . 'includes/class-ste-checkout.php';
+    require_once STE_PLUGIN_DIR . 'includes/class-ste-keyboard-api.php';
 
     STE_License::init();
     STE_Admin::init();
     STE_Editor::init();
     STE_Shortcode::init();
     STE_Checkout::init();
+    STE_Keyboard_API::init();
 
     if ( get_option( 'ste_db_version', '0' ) !== STE_VERSION ) {
         STE_Checkout::create_table();
@@ -115,79 +66,11 @@ register_activation_hook( __FILE__, 'ste_activate' );
 
 /* Deactivation */
 function ste_deactivate() {
+    wp_clear_scheduled_hook( 'ste_cleanup_pending_orders' );
     flush_rewrite_rules();
 }
 register_deactivation_hook( __FILE__, 'ste_deactivate' );
 
-/* Uninstall — clean up all plugin data */
-function ste_uninstall() {
-    global $wpdb;
-    $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}ste_orders" );
-    $options = array(
-        'ste_active_plan', 'ste_license_key', 'ste_license_activated',
-        'ste_license_expires', 'ste_billing_cycle', 'ste_trial_used',
-        'ste_trial_started', 'ste_trial_expires', 'ste_cf_mode',
-        'ste_cf_app_id', 'ste_cf_secret_key', 'ste_db_version',
-        'ste_flush_rewrite', 'ste_license_salt',
-    );
-    foreach ( $options as $opt ) {
-        delete_option( $opt );
-    }
-}
-register_uninstall_hook( __FILE__, 'ste_uninstall' );
+/* Uninstall — handled by uninstall.php (loaded directly by WordPress) */
 
-/* Plugin action link */
-function ste_action_links( $links ) {
-    array_unshift( $links, '<a href="' . esc_url( admin_url( 'post-new.php?post_type=page' ) ) . '">' . esc_html__( 'Create Page', 'smart-text-editor' ) . '</a>' );
-    return $links;
-}
-add_filter( 'plugin_action_links_' . STE_PLUGIN_BASENAME, 'ste_action_links' );
-
-    if ( ! defined( 'WP_AWESOME__PLUGIN_DIR' ) ) {
-        define( 'WP_AWESOME__PLUGIN_DIR', dirname( __FILE__ ) );
-        define( 'WP_AWESOME__PLUGIN_URL', plugins_url( plugin_basename( WP_AWESOME__PLUGIN_DIR ) ) );
-    }
-
-    if ( ! function_exists( 'ste_fs' ) ) {
-        // Create a helper function for easy SDK access.
-        function ste_fs() {
-            global $ste_fs;
-
-            if ( ! isset( $ste_fs ) ) {
-                // Include Freemius SDK.
-                require_once dirname( __FILE__ ) . '/freemius/start.php';
-
-                $ste_fs = fs_dynamic_init( array(
-                    'id'                  => '27840',
-                    'slug'                => 'smart-text-editor',
-                    'type'                => 'plugin',
-                    'public_key'          => 'pk_f82147af697a5a83ac5106e050c06',
-                    'is_premium'          => true,
-                    // If your plugin is a serviceware, set this option to false.
-                    'has_premium_version' => true,
-                    'has_addons'          => false,
-                    'has_paid_plans'      => true,
-                    'is_org_compliant'    => true,
-                    // Automatically removed in the free version. If you're not using the
-                    // auto-generated free version, delete this line before uploading to wp.org.
-                    'wp_org_gatekeeper'   => 'OA7#BoRiBNqdf52FvzEf!!074aRLPs8fspif$7K1#4u4Csys1fQlCecVcUTOs2mcpeVHi#C2j9d09fOTvbC0HloPT7fFee5WdS3G',
-                    'trial'               => array(
-                        'days'               => 7,
-                        'is_require_payment' => false,
-                    ),
-                    'menu'                => array(
-                        'slug'           => 'smart-text-editor',
-                        'support'        => false,
-                    ),
-                ) );
-            }
-
-            return $ste_fs;
-        }
-
-        // Init Freemius.
-        ste_fs();
-        // Signal that SDK was initiated.
-        do_action( 'ste_fs_loaded' );
-    }
-?>
+/* Plugin action link — handled by STE_Admin::action_links() */

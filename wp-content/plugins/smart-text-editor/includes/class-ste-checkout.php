@@ -33,6 +33,11 @@ class STE_Checkout {
         // Webhook endpoint
         add_action( 'rest_api_init', array( __CLASS__, 'register_webhook' ) );
 
+        // Cron: clean up orphaned pending orders older than 1 hour
+        add_action( 'ste_cleanup_pending_orders', array( __CLASS__, 'cleanup_pending_orders' ) );
+        if ( ! wp_next_scheduled( 'ste_cleanup_pending_orders' ) ) {
+            wp_schedule_event( time(), 'hourly', 'ste_cleanup_pending_orders' );
+        }
     }
 
     /* ══════════════════════════════════════
@@ -123,26 +128,31 @@ class STE_Checkout {
     }
 
     public static function register_settings() {
-        // Cashfree settings
         register_setting( 'ste_cashfree_settings', 'ste_cf_mode', array(
-            'type' => 'string', 'default' => 'sandbox',
-            'sanitize_callback' => function( $v ) { return in_array( $v, array( 'sandbox', 'production' ) ) ? $v : 'sandbox'; },
+            'type'              => 'string',
+            'default'           => 'sandbox',
+            'sanitize_callback' => array( __CLASS__, 'sanitize_cf_mode' ),
         ) );
         register_setting( 'ste_cashfree_settings', 'ste_cf_app_id', array(
-            'type' => 'string', 'sanitize_callback' => 'sanitize_text_field',
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
         ) );
         register_setting( 'ste_cashfree_settings', 'ste_cf_secret_key', array(
-            'type' => 'string',
-            'sanitize_callback' => function( $v ) {
-                $v = sanitize_text_field( $v );
-                // Only re-encrypt if a new value was submitted (not the masked placeholder)
-                if ( ! empty( $v ) && strpos( $v, 'cfsk_' ) === 0 ) {
-                    return STE_Checkout::encrypt_value( $v );
-                }
-                return get_option( 'ste_cf_secret_key', '' ); // keep existing encrypted value
-            },
+            'type'              => 'string',
+            'sanitize_callback' => array( __CLASS__, 'sanitize_cf_secret_key' ),
         ) );
+    }
 
+    public static function sanitize_cf_mode( $v ) {
+        return in_array( $v, array( 'sandbox', 'production' ), true ) ? $v : 'sandbox';
+    }
+
+    public static function sanitize_cf_secret_key( $v ) {
+        $v = sanitize_text_field( $v );
+        if ( ! empty( $v ) && strpos( $v, 'cfsk_' ) === 0 ) {
+            return self::encrypt_value( $v );
+        }
+        return get_option( 'ste_cf_secret_key', '' );
     }
 
     /* ══════════════════════════════════════
@@ -203,25 +213,31 @@ class STE_Checkout {
     }
 
     /**
-     * Look up the expiry date for a license key from the orders table.
+     * Cron callback: delete pending orders that were never completed and are
+     * older than 1 hour. These are orphaned rows left behind when PHP died
+     * between the DB insert and the Cashfree API call.
      */
-    public static function get_expiry_by_license_key( $license_key ) {
+    public static function cleanup_pending_orders() {
         global $wpdb;
-        $table = $wpdb->prefix . 'ste_orders';
-        return $wpdb->get_var( $wpdb->prepare(
-            "SELECT expires_at FROM {$table} WHERE license_key = %s AND status = 'completed' LIMIT 1",
-            $license_key
-        ) );
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM `{$wpdb->prefix}ste_orders`
+                  WHERE status = 'pending'
+                    AND created_at < %s",
+                gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS )
+            )
+        );
     }
 
     /**
-     * Look up the billing cycle for a license key from the orders table.
+     * Look up both expires_at and billing_cycle for a license key in one query.
+     * Returns an object with ->expires_at and ->billing_cycle, or null if not found.
      */
-    public static function get_billing_cycle_by_license_key( $license_key ) {
+    public static function get_order_data_by_license_key( $license_key ) {
         global $wpdb;
         $table = $wpdb->prefix . 'ste_orders';
-        return $wpdb->get_var( $wpdb->prepare(
-            "SELECT billing_cycle FROM {$table} WHERE license_key = %s AND status = 'completed' LIMIT 1",
+        return $wpdb->get_row( $wpdb->prepare(
+            "SELECT expires_at, billing_cycle FROM {$table} WHERE license_key = %s AND status = 'completed' LIMIT 1",
             $license_key
         ) );
     }
@@ -331,7 +347,7 @@ class STE_Checkout {
             'amount'         => $amount,
             'currency'       => 'INR',
             'status'         => 'pending',
-            'created_at'     => current_time( 'mysql' ),
+            'created_at'     => gmdate( 'Y-m-d H:i:s' ),
         ), array( '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s' ) );
 
         // Create Cashfree order
@@ -340,7 +356,7 @@ class STE_Checkout {
             'order_amount'   => $amount,
             'order_currency' => 'INR',
             'customer_details' => array(
-                'customer_id'    => 'cust_' . substr( hash( 'sha256', $email ), 0, 12 ),
+                'customer_id'    => 'cust_' . substr( str_replace( '.', '', uniqid( '', true ) ), 0, 20 ),
                 'customer_name'  => $name,
                 'customer_email' => $email,
                 'customer_phone' => preg_replace( '/\D/', '', $phone ),
@@ -407,15 +423,14 @@ class STE_Checkout {
        STEP 2: VERIFY PAYMENT (called on return)
        ══════════════════════════════════════ */
 
-    public static function verify_payment( $order_number ) {
+    public static function verify_payment( $order_number, $expected_amount = null ) {
         if ( ! self::is_cf_configured() || empty( $order_number ) ) return false;
 
-        // Fetch payment status from Cashfree
         $response = wp_remote_get( self::get_cf_api_base() . '/orders/' . rawurlencode( $order_number ), array(
             'headers' => array(
-                'x-client-id'    => self::get_cf_app_id(),
+                'x-client-id'     => self::get_cf_app_id(),
                 'x-client-secret' => self::get_cf_secret_key(),
-                'x-api-version'  => '2023-08-01',
+                'x-api-version'   => '2023-08-01',
             ),
             'timeout' => 30,
         ) );
@@ -425,6 +440,15 @@ class STE_Checkout {
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
 
         if ( empty( $body['order_status'] ) ) return false;
+
+        // Cross-check the amount from Cashfree against the local DB value.
+        // This prevents a tampered return URL with a cheaper order_id from
+        // passing verification for a higher-value plan.
+        if ( null !== $expected_amount && isset( $body['order_amount'] ) ) {
+            if ( abs( (float) $body['order_amount'] - (float) $expected_amount ) > 0.01 ) {
+                return false;
+            }
+        }
 
         return $body;
     }
@@ -437,20 +461,19 @@ class STE_Checkout {
         global $wpdb;
         $table = $wpdb->prefix . 'ste_orders';
 
-        // Acquire a row-level lock to prevent duplicate license generation
-        // on concurrent requests (e.g. webhook + browser return at the same time)
-        $wpdb->query( $wpdb->prepare(
-            "SELECT id FROM {$table} WHERE order_number = %s FOR UPDATE", $order_number
-        ) );
-
-        // Get local order
+        // ── Phase 1: read order + verify with Cashfree OUTSIDE the transaction.
+        // Cashfree API calls can take up to 30 s; holding a row lock for that
+        // duration would block every other request on the same order.
         $order = $wpdb->get_row( $wpdb->prepare(
-            "SELECT * FROM {$table} WHERE order_number = %s", $order_number
+            "SELECT * FROM {$table} WHERE order_number = %s",
+            $order_number
         ) );
 
-        if ( ! $order ) return array( 'success' => false, 'message' => 'Order not found.' );
+        if ( ! $order ) {
+            return array( 'success' => false, 'message' => 'Order not found.' );
+        }
 
-        // Already completed?
+        // Already completed — no DB writes needed, return immediately.
         if ( 'completed' === $order->status && ! empty( $order->license_key ) ) {
             return array(
                 'success'     => true,
@@ -458,35 +481,34 @@ class STE_Checkout {
                 'plan'        => $order->plan,
                 'plan_label'  => ucfirst( $order->plan ),
                 'email'       => $order->customer_email,
-                'amount'      => number_format( $order->amount, 2 ),
+                'amount'      => (float) $order->amount,
                 'expires_at'  => isset( $order->expires_at ) ? $order->expires_at : '',
             );
         }
 
-        // Verify with Cashfree
-        $cf_data = self::verify_payment( $order_number );
+        // Verify payment status with Cashfree (HTTP — outside transaction).
+        $cf_data = self::verify_payment( $order_number, $order->amount );
 
         if ( ! $cf_data || 'PAID' !== strtoupper( $cf_data['order_status'] ) ) {
             $status = isset( $cf_data['order_status'] ) ? $cf_data['order_status'] : 'unknown';
-            $wpdb->update( $table,
+            $wpdb->update(
+                $table,
                 array( 'status' => strtolower( $status ) ),
                 array( 'order_number' => $order_number ),
-                array( '%s' ), array( '%s' )
+                array( '%s' ),
+                array( '%s' )
             );
             return array( 'success' => false, 'message' => 'Payment not completed. Status: ' . $status );
         }
 
-        // Payment confirmed — generate license key
-        $license_key    = STE_License::generate_key( $order->plan );
+        // Fetch payment method details from Cashfree (HTTP — outside transaction).
         $payment_method = '';
         $cf_payment_id  = '';
-
-        // Get payment details
         $pay_response = wp_remote_get( self::get_cf_api_base() . '/orders/' . rawurlencode( $order_number ) . '/payments', array(
             'headers' => array(
-                'x-client-id'    => self::get_cf_app_id(),
+                'x-client-id'     => self::get_cf_app_id(),
                 'x-client-secret' => self::get_cf_secret_key(),
-                'x-api-version'  => '2023-08-01',
+                'x-api-version'   => '2023-08-01',
             ),
             'timeout' => 15,
         ) );
@@ -498,12 +520,44 @@ class STE_Checkout {
             }
         }
 
-        // Calculate expiry based on billing cycle
+        // Pre-compute values before entering the transaction.
+        $license_key   = STE_License::generate_key( $order->plan );
         $billing_cycle = isset( $order->billing_cycle ) && 'yearly' === $order->billing_cycle ? 'yearly' : 'monthly';
         $expiry_period = ( 'yearly' === $billing_cycle ) ? '+365 days' : '+30 days';
         $expires_at    = gmdate( 'Y-m-d H:i:s', strtotime( $expiry_period ) );
 
-        // Update order
+        // ── Phase 2: open transaction ONLY for the DB writes.
+        // The FOR UPDATE lock is now fast — no HTTP calls inside the transaction.
+        $wpdb->query( 'START TRANSACTION' );
+
+        $wpdb->query( $wpdb->prepare(
+            "SELECT id FROM {$table} WHERE order_number = %s FOR UPDATE",
+            $order_number
+        ) );
+
+        // Re-read inside the transaction to guard against a concurrent request
+        // that completed the order between Phase 1 and Phase 2.
+        $order_locked = $wpdb->get_row( $wpdb->prepare(
+            "SELECT status, license_key, customer_email, customer_name, plan, amount FROM {$table} WHERE order_number = %s",
+            $order_number
+        ) );
+
+        if ( $order_locked && 'completed' === $order_locked->status && ! empty( $order_locked->license_key ) ) {
+            $wpdb->query( 'COMMIT' );
+            $plans = STE_License::get_all_plans();
+            $label = isset( $plans[ $order_locked->plan ]['label'] ) ? $plans[ $order_locked->plan ]['label'] : $order_locked->plan;
+            return array(
+                'success'     => true,
+                'license_key' => $order_locked->license_key,
+                'plan'        => $order_locked->plan,
+                'plan_label'  => $label,
+                'email'       => $order_locked->customer_email,
+                'amount'      => (float) $order_locked->amount,
+                'expires_at'  => isset( $order->expires_at ) ? $order->expires_at : '',
+            );
+        }
+
+        // Write the completed order.
         $wpdb->update( $table, array(
             'status'         => 'completed',
             'license_key'    => $license_key,
@@ -513,10 +567,11 @@ class STE_Checkout {
         ), array( 'order_number' => $order_number ),
         array( '%s', '%s', '%s', '%s', '%s' ), array( '%s' ) );
 
-        // Send license key email to customer
+        $wpdb->query( 'COMMIT' );
+
+        // Send email after the transaction is closed.
         $plans = STE_License::get_all_plans();
         $label = isset( $plans[ $order->plan ]['label'] ) ? $plans[ $order->plan ]['label'] : $order->plan;
-
         self::send_license_email( $order->customer_email, $order->customer_name, $label, $license_key, $order_number, $order->amount, $expires_at );
 
         return array(
@@ -525,95 +580,33 @@ class STE_Checkout {
             'plan'        => $order->plan,
             'plan_label'  => $label,
             'email'       => $order->customer_email,
-            'amount'      => number_format( $order->amount, 2 ),
+            'amount'      => (float) $order->amount,
             'expires_at'  => $expires_at,
         );
     }
-
     /* ══════════════════════════════════════
        SEND LICENSE KEY EMAIL
        ══════════════════════════════════════ */
 
     public static function send_license_email( $to_email, $customer_name, $plan_label, $license_key, $order_number, $amount, $expires_at = '' ) {
-        $subject = sprintf( 'Your Smart Text Editor %s License Key', $plan_label );
-        $site_url = home_url( '/' );
+        $subject   = sprintf( 'Your Smart Text Editor %s License Key', $plan_label );
+        $site_url  = home_url( '/' );
+        $site_host = sanitize_text_field( wp_parse_url( $site_url, PHP_URL_HOST ) );
 
-        $body = '<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f4f4f7;font-family:Inter,Arial,Helvetica,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:40px 20px;">
-<tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        ob_start();
+        include STE_PLUGIN_DIR . 'templates/email-license.php';
+        $body = ob_get_clean();
 
-    <!-- Header -->
-    <tr><td style="background:linear-gradient(135deg,#6366f1,#a855f7);padding:32px 40px;text-align:center;">
-        <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">Smart Text Editor</h1>
-        <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">Payment Confirmation</p>
-    </td></tr>
-
-    <!-- Body -->
-    <tr><td style="padding:40px;">
-        <p style="font-size:16px;color:#333;margin:0 0 20px;">Hi <strong>' . esc_html( $customer_name ) . '</strong>,</p>
-        <p style="font-size:15px;color:#555;margin:0 0 24px;line-height:1.6;">
-            Thank you for purchasing the <strong>' . esc_html( $plan_label ) . '</strong> plan! Your payment has been confirmed and your license key is ready to use.
-        </p>
-
-        <!-- License Key Box -->
-        <div style="background:#f8f7ff;border:2px solid #6366f1;border-radius:10px;padding:24px;text-align:center;margin:0 0 28px;">
-            <p style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#6366f1;margin:0 0 10px;font-weight:600;">Your License Key</p>
-            <p style="font-size:22px;font-weight:700;color:#1a1a2e;margin:0;font-family:monospace;letter-spacing:2px;">' . esc_html( $license_key ) . '</p>
-        </div>
-
-        <!-- Order Details -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;font-size:14px;color:#555;">
-            <tr><td style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Order Number</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">' . esc_html( $order_number ) . '</td></tr>
-            <tr><td style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Plan</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">' . esc_html( $plan_label ) . '</td></tr>
-            <tr><td style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Amount Paid</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">₹' . esc_html( number_format( $amount, 2 ) ) . ' INR</td></tr>
-            <tr><td style="padding:8px 0;border-bottom:1px solid #eee;"><strong>Valid Until</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">' . ( $expires_at ? esc_html( date_i18n( 'F j, Y', strtotime( $expires_at ) ) ) : 'N/A' ) . '</td></tr>
-        </table>
-
-        <!-- Activation Steps -->
-        <div style="background:#f0fdf4;border-radius:8px;padding:20px 24px;margin:0 0 28px;">
-            <p style="font-size:14px;font-weight:600;color:#065f46;margin:0 0 12px;">How to Activate:</p>
-            <ol style="margin:0;padding:0 0 0 20px;font-size:14px;color:#333;line-height:1.8;">
-                <li>Go to your WordPress Admin Dashboard</li>
-                <li>Navigate to <strong>Smart Editor &rarr; Plan &amp; License</strong></li>
-                <li>Paste your license key and click <strong>Activate License</strong></li>
-            </ol>
-        </div>
-
-        <p style="font-size:13px;color:#999;margin:0;line-height:1.6;">
-            Keep this email safe — it contains your license key. If you have any questions, reply to this email and we\'ll be happy to help.
-        </p>
-    </td></tr>
-
-    <!-- Footer -->
-    <tr><td style="background:#f9fafb;padding:24px 40px;text-align:center;border-top:1px solid #eee;">
-        <p style="font-size:12px;color:#999;margin:0;">
-            &copy; ' . gmdate( 'Y' ) . ' Smart Text Editor &bull; <a href="' . esc_url( $site_url ) . '" style="color:#6366f1;text-decoration:none;">' . esc_html( wp_parse_url( $site_url, PHP_URL_HOST ) ) . '</a>
-        </p>
-    </td></tr>
-
-</table>
-</td></tr>
-</table>
-</body>
-</html>';
-
-        $host        = sanitize_text_field( wp_parse_url( $site_url, PHP_URL_HOST ) );
         $admin_email = sanitize_email( get_option( 'admin_email' ) );
         $headers = array(
             'Content-Type: text/html; charset=UTF-8',
-            'From: Smart Text Editor <no-reply@' . $host . '>',
+            'From: Smart Text Editor <no-reply@' . $site_host . '>',
             'Reply-To: ' . $admin_email,
         );
 
         $sent = wp_mail( $to_email, $subject, $body, $headers );
 
-        if ( ! $sent ) {
-            // Log the failure so the admin can investigate via the debug log.
-            // The order is safely stored in the DB; the admin can resend from the Orders page.
+        if ( ! $sent && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
             error_log( sprintf(
                 'STE: wp_mail failed for order %s to %s',
                 $order_number,
@@ -621,6 +614,7 @@ class STE_Checkout {
             ) );
         }
     }
+
 
     /* ══════════════════════════════════════
        WEBHOOK (Cashfree server notification)
@@ -644,6 +638,10 @@ class STE_Checkout {
         if ( self::is_cf_configured() ) {
             if ( ! $timestamp || ! $received ) {
                 return new WP_REST_Response( array( 'status' => 'missing_signature' ), 401 );
+            }
+            // Reject replayed webhooks — timestamp must be within a 5-minute window.
+            if ( abs( time() - intval( $timestamp ) ) > 300 ) {
+                return new WP_REST_Response( array( 'status' => 'expired_signature' ), 401 );
             }
             $signed_payload = $timestamp . $raw_body;
             $expected       = base64_encode( hash_hmac( 'sha256', $signed_payload, self::get_cf_secret_key(), true ) );
@@ -866,20 +864,26 @@ class STE_Checkout {
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <span style="display:inline-block;padding:2px 10px;border-radius:50px;font-size:11px;font-weight:600;
-                                    <?php
-                                    switch ( $order->status ) {
-                                        case 'completed': echo esc_attr( 'background:#d1fae5;color:#065f46;' ); break;
-                                        case 'pending':   echo esc_attr( 'background:#fef3c7;color:#92400e;' ); break;
-                                        default:          echo esc_attr( 'background:#fee2e2;color:#991b1b;' ); break;
-                                    }
-                                    ?>">
+                                <?php
+                                switch ( $order->status ) {
+                                    case 'completed':
+                                        $status_css = 'background:#d1fae5;color:#065f46;';
+                                        break;
+                                    case 'pending':
+                                        $status_css = 'background:#fef3c7;color:#92400e;';
+                                        break;
+                                    default:
+                                        $status_css = 'background:#fee2e2;color:#991b1b;';
+                                        break;
+                                }
+                                ?>
+                                <span style="display:inline-block;padding:2px 10px;border-radius:50px;font-size:11px;font-weight:600;<?php echo esc_attr( $status_css ); ?>">
                                     <?php echo esc_html( $order->status ); ?>
                                 </span>
                             </td>
                             <td>
                                 <?php if ( $order_expires && 'completed' === $order->status ) :
-                                    $is_expired = current_time( 'timestamp' ) > strtotime( $order_expires );
+                                    $is_expired = time() > strtotime( $order_expires );
                                 ?>
                                     <span style="font-size:12px;<?php echo esc_attr( $is_expired ? 'color:#dc2626;' : 'color:#333;' ); ?>">
                                         <?php echo esc_html( date_i18n( 'M j, Y', strtotime( $order_expires ) ) ); ?>

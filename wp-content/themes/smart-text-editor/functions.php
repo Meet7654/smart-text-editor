@@ -24,7 +24,11 @@ add_action( 'wp_head', 'ste_theme_favicon' );
 
 /* ── Enqueue assets ── */
 function ste_enqueue_frontend_anim() {
-    if ( is_front_page() || is_home() || is_page_template( 'template-contact.php' ) || is_page_template( 'template-about.php' ) || is_page_template( 'template-landing.php' ) || is_page_template( 'template-privacy.php' ) || is_page_template( 'template-terms.php' ) || is_page_template( 'template-refund.php' ) ) {
+    // The plugin's STE_Shortcode::enqueue_assets() already handles singular pages
+    // and pages with STE content. Only enqueue here for theme-specific templates
+    // that are NOT singular posts/pages (e.g. the homepage landing template).
+    if ( is_singular() ) return; // plugin handles these
+    if ( is_front_page() || is_home() ) {
         if ( defined( 'STE_PLUGIN_URL' ) && defined( 'STE_VERSION' ) ) {
             wp_enqueue_style( 'ste-front', STE_PLUGIN_URL . 'assets/css/frontend.css', array(), STE_VERSION );
             wp_enqueue_script( 'ste-front', STE_PLUGIN_URL . 'assets/js/frontend.js', array(), STE_VERSION, true );

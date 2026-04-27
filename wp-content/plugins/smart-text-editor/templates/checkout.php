@@ -24,12 +24,11 @@ if ( $return_order_id ) {
     $return_result = STE_Checkout::handle_return( $return_order_id, $plan_key );
     // Override sidebar values from actual order data
     if ( $return_result && $return_result['success'] ) {
-        $plan_key = $return_result['plan'];
-        $plan     = $plans[ $plan_key ];
-        $actual_amount = floatval( str_replace( ',', '', $return_result['amount'] ) );
-        $plan_price    = $actual_amount;
-        $is_yearly     = ( $actual_amount > $plan['price_num'] );
-        $plan_period   = $is_yearly ? 'year' : 'month';
+        $plan_key    = $return_result['plan'];
+        $plan        = $plans[ $plan_key ];
+        $plan_price  = (float) $return_result['amount'];
+        $is_yearly   = ( $plan_price > $plan['price_num'] );
+        $plan_period = $is_yearly ? 'year' : 'month';
     }
 }
 ?>
